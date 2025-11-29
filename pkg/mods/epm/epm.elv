@@ -392,18 +392,49 @@ fn installed {
 # epm:list is an alias for epm:installed
 fn list { installed }
 
+fn -get-all-dependencies {|metadata|
+  var all-dependencies = []
+
+  if (has-key $metadata dependencies) {
+    set all-dependencies = [$@all-dependencies (all $metadata[dependencies])]
+  }
+
+  if (has-key $metadata devDependencies) {
+    set all-dependencies = [$@all-dependencies (all $metadata[devDependencies])]
+  }
+
+  put $all-dependencies
+}
+
 # Install the named packages. By default, if a package is already installed, a
 # message will be shown. This can be disabled by passing
 # `&silent-if-installed=$true`, so that already-installed packages are silently
 # ignored.
+#
+# When no packages are passed, read all the dependencies
+# from the `dependencies` and `devDependencies` keys
+# in the metadata descriptor within the current directory.
 fn install {|&silent-if-installed=$false @pkgs|
+  var actual-packages = (
+    if (not-eq $pkgs []) {
+      put $pkgs
+    } else {
+      if (os:is-regular metadata.json) {
+        from-json < metadata.json |
+          -get-all-dependencies (all)
+      } else {
+        put []
+      }
+    }
+  )
+
   # Install and upgrade are method-specific, so we call the
   # corresponding functions using -package-op
-  if (eq $pkgs []) {
+  if (eq $actual-packages []) {
     -error "You must specify at least one package."
     return
   }
-  for pkg $pkgs {
+  for pkg $actual-packages {
     if (is-installed $pkg) {
       if (not $silent-if-installed) {
         -info "Package "$pkg" is already installed."
