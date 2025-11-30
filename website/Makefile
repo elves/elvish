@@ -9,7 +9,7 @@ HTMLS := $(MDS:.md=.html)
 # Generates the website into $(DST_DIR).
 gen: tools/gensite.bin $(HTMLS)
 	tools/gensite.bin . $(DST_DIR)
-	ln -sf `pwd`/fonts `pwd`/favicons/* $(DST_DIR)/
+	ln -sf `pwd`/fonts `pwd`/favicons/* `pwd`/images $(DST_DIR)/
 
 # Generates docset into $(DOCSET_DST_DIR).
 docset: tools/gensite.bin $(HTMLS)
