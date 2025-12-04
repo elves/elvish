@@ -2,7 +2,7 @@ use os
 use path
 use str
 use ./epm
-use ./fake-git
+use github.com/giancosta86/ethereal/v1/fake-git
 
 set epm:git~ = (fake-git:create-command [
   &'https://github.com/giancosta86/epm-plus'=[
@@ -102,8 +102,6 @@ fn get-test-package-list {
 }
 
 >> 'In epm' {
-  os:remove-all (path:join $epm:managed-dir github.com giancosta86 epm-plus)
-
   >> 'splitting package name and version' {
     >> 'without version' {
       epm:-split-package-name-and-version 'github.com/giancosta86/epm-plus' |
