@@ -50,7 +50,7 @@ func startCompletion(ed *Editor, c etk.Context) {
 				// TODO: This should just be a call to comps.ApplyPending with a
 				// child Context
 				bufferVar.Swap(func(buf comps.TextBuffer) comps.TextBuffer {
-					buf = comps.PatchPending(buf, pendingVar.Get())
+					buf, _, _ = comps.PatchPending(buf, pendingVar.Get())
 					return buf
 				})
 				return etk.Finish

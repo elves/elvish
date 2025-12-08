@@ -14,11 +14,7 @@ var TextArea = etk.ModComp(comps.TextArea,
 	etk.InitState("prompt", ui.T("~> ")),
 	etk.InitState("abbr", func(y func(a, f string)) { y("foo", "lorem") }),
 	etk.InitState("binding",
-		func(ev term.Event, c etk.Context, tag string, f etk.React) etk.Reaction {
-			reaction := f(ev)
-			if reaction != etk.Unused {
-				return reaction
-			}
+		func(c etk.Context, ev term.Event) etk.Reaction {
 			bufferVar := etk.BindState(c, "buffer", comps.TextBuffer{})
 			switch ev {
 			case term.K(ui.Left):
