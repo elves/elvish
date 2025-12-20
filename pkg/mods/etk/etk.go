@@ -37,6 +37,14 @@ var Ns = eval.BuildNsNamed("etk").
 			}
 			return term.KeyEvent(k), nil
 		},
+		"-ev-to-string": func(event term.Event) string {
+			switch event := event.(type) {
+			case term.KeyEvent:
+				return ui.Key(event).String()
+			default:
+				return fmt.Sprintf("%#v", event)
+			}
+		},
 		"with-init": func(fm *eval.Frame, compAny any, inits vals.Map) (etk.Comp, error) {
 			// TODO: Integrate the parsing into vals.ScanToGo
 			comp, err := scanComp(fm, compAny)

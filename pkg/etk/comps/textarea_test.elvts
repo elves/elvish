@@ -1,4 +1,5 @@
 //each:text-area-fixture
+//each:eval use etk
 
 /////////////
 # rendering #
@@ -493,10 +494,25 @@ Unused
 ~> send &show-reaction [mouse-dummy]
 Unused
 
-## keybinding ##
-// TODO
-
 ## submission ##
 ~> send code
 ~> send &show-reaction [Enter]
 Finish
+
+## custom binding ##
+~> setup [&binding={|ctx ev|
+     $ctx[set] prompt (styled (etk:-ev-to-string $ev))
+     put $etk:consumed
+   }]
+~> send x
+   render
+┌────────────────────────────────────────┐
+│x                                       │
+│  ̅̂                                      │
+└────────────────────────────────────────┘
+~> send y
+   render
+┌────────────────────────────────────────┐
+│y                                       │
+│  ̅̂                                      │
+└────────────────────────────────────────┘

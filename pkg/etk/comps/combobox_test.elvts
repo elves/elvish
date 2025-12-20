@@ -2,6 +2,7 @@
 //each:extra-bindings
 //each:eval fn list-items {|xs| put [&len={ count $xs } &get={|i| put $xs[$i] } &show={|i| styled $xs[$i]; -extra:styling ''}] }
 //each:eval var gen-just-foo = {|q| list-items [foo]; put 0}
+//each:eval use etk
 
 /////////////
 # rendering #
@@ -67,6 +68,52 @@
 │                                        │
 │bar                                     │
 │########################################│
+│baz                                     │
+│                                        │
+└────────────────────────────────────────┘
+
+## custom binding ##
+~> setup [&gen-list={|q| list-items [foo bar baz]; put 0}
+          &binding={|ctx ev|
+            if (eq (etk:-ev-to-string $ev) "x") {
+              $ctx[set] list/selected (num 1)
+              put $etk:consumed
+            } else {
+              put $etk:unused
+            }
+          }]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│ ̅̂                                       │
+│foo                                     │
+│########################################│
+│bar                                     │
+│                                        │
+│baz                                     │
+│                                        │
+└────────────────────────────────────────┘
+~> send x
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│ ̅̂                                       │
+│foo                                     │
+│                                        │
+│bar                                     │
+│########################################│
+│baz                                     │
+│                                        │
+└────────────────────────────────────────┘
+~> send y
+   render
+┌────────────────────────────────────────┐
+│y                                       │
+│  ̅̂                                      │
+│foo                                     │
+│########################################│
+│bar                                     │
+│                                        │
 │baz                                     │
 │                                        │
 └────────────────────────────────────────┘
