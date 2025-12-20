@@ -1,8 +1,7 @@
 //each:combo-box-fixture
 //each:extra-bindings
-//each:eval fn list-items {|xs| put [&len={ count $xs } &get={|i| put $xs[$i] } &show={|i| styled $xs[$i]; -extra:styling ''}] }
-//each:eval var gen-just-foo = {|q| list-items [foo]; put 0}
 //each:eval use etk
+//each:eval var gen-just-foo = {|q| etk:-string-items foo; put 0}
 
 /////////////
 # rendering #
@@ -31,7 +30,7 @@
 ////////////
 
 ## query event and regeneration ##
-~> setup [&gen-list={|q| list-items [$q]; put 0}]
+~> setup [&gen-list={|q| etk:-string-items $q; put 0}]
    render
 ┌────────────────────────────────────────┐
 │                                        │
@@ -47,7 +46,7 @@
 └────────────────────────────────────────┘
 
 ## list event ##
-~> setup [&gen-list={|q| list-items [foo bar baz]; put 0}]
+~> setup [&gen-list={|q| etk:-string-items foo bar baz; put 0}]
    render
 ┌────────────────────────────────────────┐
 │                                        │
@@ -73,7 +72,7 @@
 └────────────────────────────────────────┘
 
 ## custom binding ##
-~> setup [&gen-list={|q| list-items [foo bar baz]; put 0}
+~> setup [&gen-list={|q| etk:-string-items foo bar baz; put 0}
           &binding={|ctx ev|
             if (eq (etk:-ev-to-string $ev) "x") {
               $ctx[set] list/selected (num 1)

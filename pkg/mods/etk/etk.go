@@ -45,6 +45,7 @@ var Ns = eval.BuildNsNamed("etk").
 				return fmt.Sprintf("%#v", event)
 			}
 		},
+		"-string-items": comps.StringItems,
 		"with-init": func(fm *eval.Frame, compAny any, inits vals.Map) (etk.Comp, error) {
 			// TODO: Integrate the parsing into vals.ScanToGo
 			comp, err := scanComp(fm, compAny)

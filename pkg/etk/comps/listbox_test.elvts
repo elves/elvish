@@ -1,13 +1,13 @@
 //each:list-box-fixture
 //each:extra-bindings
-//each:eval fn list-items {|xs| put [&len={ count $xs } &get={|i| put $xs[$i] } &show={|i| styled $xs[$i]; -extra:styling ''}] }
+//each:eval use etk
 
 ///////////////////////////
 # single-column rendering #
 ///////////////////////////
 
 ## empty items ##
-~> setup [&items=(list-items [])]
+~> setup [&items=(etk:-string-items)]
    render
 ┌────────────────────────────────────────┐
 │(no item)                               │
@@ -15,7 +15,7 @@
 └────────────────────────────────────────┘
 
 ## rendering all items ##
-~> setup [&items=(list-items [foo bar baz])]
+~> setup [&items=(etk:-string-items foo bar baz)]
    render &height=10
 ┌────────────────────────────────────────┐
 │foo                                     │
@@ -27,26 +27,28 @@
 └────────────────────────────────────────┘
 
 ## area styling ##
-~> fn area-style {|i|
-     if (== $i 1) {
-       -extra:styling "inverse"
-     } else {
-       -extra:styling ""
-     }
-   }
-~> setup [&items=(assoc (list-items [foo "bar\nbaz"]) area-style $area-style~)]
+~> setup [&items=[
+     &len={|| num 2}
+     &get={|i| put unused}
+     &show={|i|
+       if (== $i 0) {
+         put "foo"; -extra:styling ''
+       } else {
+         put "bar\nbaz"; -extra:styling 'magenta inverse'
+       }
+     }]]
    render
 ┌────────────────────────────────────────┐
 │foo                                     │
 │#̅̂#######################################│
 │bar                                     │
-│                                        │
+│WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW│
 │baz                                     │
-│                                        │
+│WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW│
 └────────────────────────────────────────┘
 
 ## cropping long lines ##
-~> setup [&items=(list-items [foo this-is-a-very-long-item baz])]
+~> setup [&items=(etk:-string-items foo this-is-a-very-long-item baz)]
    render &width=10 &height=10
 ┌──────────┐
 │foo       │
@@ -58,7 +60,7 @@
 └──────────┘
 
 ## rendering a subset of items, with scrollbar, when viewport is short ##
-~> setup [&items=(list-items [(range 10 | each $to-string~)])]
+~> setup [&items=(etk:-string-items (range 10 | each $to-string~))]
    render &height=5
 ┌────────────────────────────────────────┐
 │0                                       │
@@ -74,7 +76,7 @@
 └────────────────────────────────────────┘
 
 ## also showing scrollbar when the last item has lines outside the viewport ##
-~> setup [&items=(list-items [foo "bar\nbaz"])]
+~> setup [&items=(etk:-string-items foo "bar\nbaz")]
    render &height=2
 ┌────────────────────────────────────────┐
 │foo                                     │
@@ -84,7 +86,7 @@
 └────────────────────────────────────────┘
 
 ## left and right padding ##
-~> setup [&items=(list-items [foo bar rather-long]) &left-padding=1 &right-padding=2]
+~> setup [&items=(etk:-string-items foo bar rather-long) &left-padding=1 &right-padding=2]
    render &width=10
 ┌──────────┐
 │ foo      │
@@ -95,3 +97,397 @@
 │          │
 └──────────┘
 
+
+//////////////////////////////////////////////////
+# builtin event handling in single-column layout #
+//////////////////////////////////////////////////
+
+## up and down ##
+~> setup [&items=(etk:-string-items foo bar lorem)]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│#̅̂#######################################│
+│bar                                     │
+│                                        │
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Down]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│                                        │
+│bar                                     │
+│#̅̂#######################################│
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Down]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│                                        │
+│bar                                     │
+│                                        │
+│lorem                                   │
+│#̅̂#######################################│
+└────────────────────────────────────────┘
+~> send [Down]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│                                        │
+│bar                                     │
+│                                        │
+│lorem                                   │
+│#̅̂#######################################│
+└────────────────────────────────────────┘
+~> send [Up]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│                                        │
+│bar                                     │
+│#̅̂#######################################│
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Up]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│#̅̂#######################################│
+│bar                                     │
+│                                        │
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Up]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│#̅̂#######################################│
+│bar                                     │
+│                                        │
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
+
+## tab and shift-tab ##
+~> setup [&items=(etk:-string-items foo bar lorem)]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│#̅̂#######################################│
+│bar                                     │
+│                                        │
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Tab]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│                                        │
+│bar                                     │
+│#̅̂#######################################│
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Tab]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│                                        │
+│bar                                     │
+│                                        │
+│lorem                                   │
+│#̅̂#######################################│
+└────────────────────────────────────────┘
+~> send [Tab]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│#̅̂#######################################│
+│bar                                     │
+│                                        │
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Shift-Tab]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│                                        │
+│bar                                     │
+│                                        │
+│lorem                                   │
+│#̅̂#######################################│
+└────────────────────────────────────────┘
+~> send [Shift-Tab]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│                                        │
+│bar                                     │
+│#̅̂#######################################│
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
+
+## left and right (unhandled) ##
+~> setup [&items=(etk:-string-items foo bar lorem)]
+~> send &show-reaction [Left]
+Unused
+~> send &show-reaction [Right]
+Unused
+
+//////////////////////////
+# multi-column rendering #
+//////////////////////////
+
+## empty items ##
+~> setup [&multi-column=$true &items=(etk:-string-items)]
+   render
+┌────────────────────────────────────────┐
+│(no item)                               │
+│ ̅̂                                       │
+└────────────────────────────────────────┘
+
+## area styling ##
+~> setup [&multi-column=$true &items=[
+     &len={|| num 8}
+     &get={|i| put unused}
+     &show={|i|
+       put item$i
+       if (== $i 2) {
+         -extra:styling 'magenta inverse'
+       } else {
+         -extra:styling ''
+       }
+     }]]
+   render
+┌────────────────────────────────────────┐
+│item0    item2    item4    item6        │
+│#̅̂######  WWWWWWW                        │
+│item1    item3    item5    item7        │
+│                                        │
+└────────────────────────────────────────┘
+
+## rendering all items when one row fits ##
+~> setup [&multi-column=$true &items=(etk:-string-items foo bar lorem ipsum)]
+   render
+┌────────────────────────────────────────┐
+│foo    bar    lorem    ipsum            │
+│#̅̂####                                   │
+└────────────────────────────────────────┘
+
+## rendering all items when multiple rows are needed ##
+~> setup [&multi-column=$true &items=(etk:-string-items (range 8 | each {|i| put item$i}))]
+   render
+┌────────────────────────────────────────┐
+│item0    item2    item4    item6        │
+│#̅̂######                                 │
+│item1    item3    item5    item7        │
+│                                        │
+└────────────────────────────────────────┘
+
+## rendering with scrollbar ##
+~> setup [&multi-column=$true &items=(etk:-string-items (range 20 | each {|i| put item$i}))]
+   render &height=3
+┌────────────────────────────────────────┐
+│item0    item2    item4    item6    item│
+│#̅̂######                                 │
+│item1    item3    item5    item7    item│
+│                                        │
+│                    ━━━━━━━━━━━━━━━━━━━━│
+│WWWWWWWWWWWWWWWWWWWWMMMMMMMMMMMMMMMMMMMM│
+└────────────────────────────────────────┘
+
+/////////////////////////////////////////////////
+# builtin event handling in multi-column layout #
+/////////////////////////////////////////////////
+
+## up and down ##
+~> setup [&multi-column=$true &items=(etk:-string-items foo bar lorem)]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│#̅̂####               │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Down]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│                    │
+│bar                 │
+│#̅̂####               │
+└────────────────────┘
+~> send [Down]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│       #̅̂######      │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Down]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│       #̅̂######      │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Up]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│                    │
+│bar                 │
+│#̅̂####               │
+└────────────────────┘
+~> send [Up]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│#̅̂####               │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Up]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│#̅̂####               │
+│bar                 │
+│                    │
+└────────────────────┘
+
+## tab and shift-tab ##
+~> setup [&multi-column=$true &items=(etk:-string-items foo bar lorem)]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│#̅̂####               │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Tab]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│                    │
+│bar                 │
+│#̅̂####               │
+└────────────────────┘
+~> send [Tab]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│       #̅̂######      │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Tab]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│#̅̂####               │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Shift-Tab]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│       #̅̂######      │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Shift-Tab]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│                    │
+│bar                 │
+│#̅̂####               │
+└────────────────────┘
+
+## left and right ##
+~> setup [&multi-column=$true &items=(etk:-string-items foo bar lorem)]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│#̅̂####               │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Right]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│       #̅̂######      │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Right]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│       #̅̂######      │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Left]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│#̅̂####               │
+│bar                 │
+│                    │
+└────────────────────┘
+~> send [Left]
+   render &width=20
+┌────────────────────┐
+│foo    lorem        │
+│#̅̂####               │
+│bar                 │
+│                    │
+└────────────────────┘
+
+//////////////////
+# custom binding #
+//////////////////
+
+~> setup [&items=(etk:-string-items foo bar lorem)
+          &binding={|ctx ev|
+            if (eq (etk:-ev-to-string $ev) x) {
+              $ctx[set] selected (num 1)
+              put $etk:consumed
+            } else {
+              put $etk:unused
+            }
+          }]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│#̅̂#######################################│
+│bar                                     │
+│                                        │
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
+~> send x
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│                                        │
+│bar                                     │
+│#̅̂#######################################│
+│lorem                                   │
+│                                        │
+└────────────────────────────────────────┘
