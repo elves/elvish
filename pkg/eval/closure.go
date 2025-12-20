@@ -174,7 +174,7 @@ func (er UnsupportedOptionsError) Error() string {
 	return fmt.Sprintf("unsupported options: %s", strings.Join(er.Options, ", "))
 }
 
-func (c *Closure) Fields() vals.MethodMap { return closureFields{c} }
+func (c *Closure) Fields() vals.PropertyMap { return closureFields{c} }
 
 type closureFields struct{ c *Closure }
 

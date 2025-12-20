@@ -58,7 +58,7 @@ func Index(a, k any) (any, error) {
 	case List:
 		return indexList(a, k)
 	case PseudoMap:
-		return convertResult(indexMethodMap(a.Fields(), k))
+		return convertResult(indexPropertyMap(a.Fields(), k))
 	default:
 		if keys := GetFieldMapKeys(a); keys != nil {
 			return convertResult(indexFieldMap(a, k, keys))
@@ -78,12 +78,12 @@ func indexFile(f *os.File, k any) (any, error) {
 	return nil, NoSuchKey(k)
 }
 
-func indexMethodMap(m MethodMap, k any) (any, bool) {
+func indexPropertyMap(m PropertyMap, k any) (any, bool) {
 	kstring, ok := k.(string)
 	if !ok {
 		return nil, false
 	}
-	for i, key := range getMethodMapKeys(m) {
+	for i, key := range getPropertyMapKeys(m) {
 		if kstring == key {
 			return reflect.ValueOf(m).Method(i).Call(nil)[0].Interface(), true
 		}

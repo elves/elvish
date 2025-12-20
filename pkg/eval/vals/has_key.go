@@ -23,17 +23,17 @@ func HasKey(container, key any) bool {
 	case Map:
 		return hashmap.HasKey(container, key)
 	case PseudoMap:
-		return hasKeyFieldOrMethodMap(key, getMethodMapKeys(container.Fields()))
+		return hasKeyFieldOrPropertyMap(key, getPropertyMapKeys(container.Fields()))
 	default:
 		if keys := GetFieldMapKeys(container); keys != nil {
-			return hasKeyFieldOrMethodMap(key, keys)
+			return hasKeyFieldOrPropertyMap(key, keys)
 		} else {
 			return hasKeyViaIterateKeys(container, key)
 		}
 	}
 }
 
-func hasKeyFieldOrMethodMap(k any, keys []string) bool {
+func hasKeyFieldOrPropertyMap(k any, keys []string) bool {
 	kstring, ok := k.(string)
 	if !ok || kstring == "" {
 		return false

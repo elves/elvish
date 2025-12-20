@@ -4,8 +4,8 @@ import "testing"
 
 type testPseudoMap struct{}
 
-func (testPseudoMap) Kind() string      { return "test-pseudo-map" }
-func (testPseudoMap) Fields() MethodMap { return methodMap{} }
+func (testPseudoMap) Kind() string        { return "test-pseudo-map" }
+func (testPseudoMap) Fields() PropertyMap { return methodMap{} }
 
 type methodMap struct{}
 

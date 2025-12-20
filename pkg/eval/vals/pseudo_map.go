@@ -10,26 +10,27 @@ import (
 
 // PseudoMap may be implemented by a type to support map-like introspection. The
 // Repr, Index, HasKey and IterateKeys operations handle pseudo maps.
-type PseudoMap interface{ Fields() MethodMap }
+type PseudoMap interface{ Fields() PropertyMap }
 
-// MethodMap is a type whose methods are all nullary and exported.
-type MethodMap any
+// PropertyMap is a type whose methods are all nullary and exported
+// (in other words, they all represent properties).
+type PropertyMap any
 
-var methodMapKeysCache sync.Map
+var propertyMapKeysCache sync.Map
 
-type methodMapKeys []string
+type propertyMapKeys []string
 
-func getMethodMapKeys(v MethodMap) methodMapKeys {
+func getPropertyMapKeys(v PropertyMap) propertyMapKeys {
 	t := reflect.TypeOf(v)
-	if fields, ok := methodMapKeysCache.Load(t); ok {
-		return fields.(methodMapKeys)
+	if fields, ok := propertyMapKeysCache.Load(t); ok {
+		return fields.(propertyMapKeys)
 	}
-	keys := makeMethodMapKeys(t)
-	methodMapKeysCache.Store(t, keys)
+	keys := makePropertyMapKeys(t)
+	propertyMapKeysCache.Store(t, keys)
 	return keys
 }
 
-func makeMethodMapKeys(t reflect.Type) methodMapKeys {
+func makePropertyMapKeys(t reflect.Type) propertyMapKeys {
 	n := t.NumMethod()
 	keys := make([]string, n)
 	for i := range n {

@@ -30,10 +30,10 @@ func IterateKeys(v any, f func(any) bool) error {
 			}
 		}
 	case PseudoMap:
-		iterateKeysFieldOrMethodMap(getMethodMapKeys(v.Fields()), f)
+		iterateKeysFieldOrPropertyMap(getPropertyMapKeys(v.Fields()), f)
 	default:
 		if keys := GetFieldMapKeys(v); keys != nil {
-			iterateKeysFieldOrMethodMap(keys, f)
+			iterateKeysFieldOrPropertyMap(keys, f)
 		} else {
 			return cannotIterateKeysOf{Kind(v)}
 		}
@@ -41,7 +41,7 @@ func IterateKeys(v any, f func(any) bool) error {
 	return nil
 }
 
-func iterateKeysFieldOrMethodMap(keys []string, f func(any) bool) {
+func iterateKeysFieldOrPropertyMap(keys []string, f func(any) bool) {
 	for _, k := range keys {
 		if !f(k) {
 			break

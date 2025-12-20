@@ -72,14 +72,14 @@ func Repr(v any, indent int) string {
 	case PseudoMap:
 		f := v.Fields()
 		fValue := reflect.ValueOf(v.Fields())
-		s := reprFieldOrMethodMap(FieldMapKeys(getMethodMapKeys(f)),
+		s := reprFieldOrPropertyMap(FieldMapKeys(getPropertyMapKeys(f)),
 			func(i int) any { return fValue.Method(i).Call(nil)[0].Interface() }, indent)
 		// Add a tag immediately after [.
 		return "[^" + Kind(v) + " " + s[1:]
 	default:
 		if keys := GetFieldMapKeys(v); keys != nil {
 			value := reflect.ValueOf(v)
-			return reprFieldOrMethodMap(keys,
+			return reprFieldOrPropertyMap(keys,
 				func(i int) any { return value.Field(i).Interface() }, indent)
 		}
 		return fmt.Sprintf("<unknown %v>", v)
@@ -111,7 +111,7 @@ type fieldMapPair struct {
 	value any
 }
 
-func reprFieldOrMethodMap(keys FieldMapKeys, value func(i int) any, indent int) string {
+func reprFieldOrPropertyMap(keys FieldMapKeys, value func(i int) any, indent int) string {
 	builder := NewMapReprBuilder(indent)
 	// Collect all the key-value pairs.
 	pairs := make([]fieldMapPair, len(keys))
