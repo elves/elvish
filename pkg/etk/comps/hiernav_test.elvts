@@ -1,0 +1,18 @@
+//each:hier-nav-fixture
+//each:eval use etk
+
+/////////////
+# rendering #
+/////////////
+
+## foo ##
+~> setup [&hier=[&on-current-path-change={|p|} &get={|p| etk:-string-items foo bar; put ''}]]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│      ̅̂                                  │
+│      foo            foo                │
+│     ############## ####################│
+│      bar            bar                │
+│                                        │
+└────────────────────────────────────────┘

@@ -71,6 +71,9 @@ func hierNavPanel(c etk.Context, h Hier, path []string, toSelect string) (etk.Vi
 		return c.Subcomp(name, nil)
 	}
 
+	if h == nil {
+		return etk.Text(ui.T("hier is nil")), func(term.Event) etk.Reaction { return etk.Unused }
+	}
 	items, s := h.Get(path)
 	if items != nil {
 		selected := 0

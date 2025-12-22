@@ -40,6 +40,7 @@ func TestTranscripts(t *testing.T) {
 		"text-area-fixture", etktest.MakeFixture(comps.TextArea),
 		"list-box-fixture", etktest.MakeFixture(comps.ListBox),
 		"combo-box-fixture", etktest.MakeFixture(comps.ComboBox),
+		"hier-nav-fixture", etktest.MakeFixture(comps.HierNav),
 		"text-area-demo-fixture", etktest.MakeFixture(
 			etk.ModComp(comps.TextArea,
 				etk.InitState("binding", func(ev term.Event, c etk.Context, r etk.React) etk.Reaction {
