@@ -125,7 +125,7 @@ func (v *listBoxView) Render(width, height int) *term.Buffer {
 }
 
 func (v *listBoxView) renderSingleColumn(width, height int) *term.Buffer {
-	first, firstCrop := getVerticalWindow(v.items, v.selected, v.first.Get(), height)
+	first, firstCrop := singleColumnWindow(v.items, v.selected, v.first.Get(), height)
 	v.first.Set(first)
 
 	lv := linesView{
@@ -159,11 +159,10 @@ func (v *listBoxView) renderSingleColumn(width, height int) *term.Buffer {
 	return box.Render(width, height)
 }
 
-const padding = 1
-
 func (w *listBoxView) renderMultiColumn(width, height int) *term.Buffer {
 	// TODO: Make padding customizable
-	first, colHeight, _ := getHorizontalWindow(w.items, w.selected, w.first.Get(), padding, width, height)
+	first, colHeight, _ := multiColumnWindow(
+		w.items, w.selected, w.first.Get(), w.leftPadding+w.rightPadding, width, height)
 	w.first.Set(first)
 	w.contentHeight.Set(colHeight)
 
@@ -192,7 +191,7 @@ func (w *listBoxView) renderMultiColumn(width, height int) *term.Buffer {
 			col.LineStylings = append(col.LineStylings, areaStyling)
 		}
 
-		colWidth := maxWidth(items, padding, i, i+colHeight)
+		colWidth := maxWidth(items, w.leftPadding+w.rightPadding, i, i+colHeight)
 		if colWidth > remainedWidth {
 			colWidth = remainedWidth
 			hasCropped = true

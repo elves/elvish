@@ -9,11 +9,11 @@ var respectDistance = 2
 
 const listBoxColGap = 2
 
-// Determines the index of the first item to show in vertical mode.
+// Determines the index of the first item to show in single-column mode.
 //
-// This function does not return the full window, but just the first item to
-// show, and how many initial lines to crop. The window determined by this
-// algorithm has the following properties:
+// This function does not return the full window,
+// but just the first item to show, and how many initial lines to crop.
+// The window determined by this algorithm has the following properties:
 //
 //   - It always includes the selected item.
 //
@@ -26,7 +26,7 @@ const listBoxColGap = 2
 //
 //   - Among all values satisfying the above conditions, the value of first is
 //     the one closest to lastFirst.
-func getVerticalWindow(items ListItems, selected int, lastFirst int, height int) (first, crop int) {
+func singleColumnWindow(items ListItems, selected int, lastFirst int, height int) (first, crop int) {
 	n := items.Len()
 	if selected < 0 {
 		selected = 0
@@ -100,9 +100,10 @@ func getVerticalWindow(items ListItems, selected int, lastFirst int, height int)
 	return 0, 0
 }
 
-// Determines the window to show in horizontal. Returns the first item to show,
-// the height of each column, and whether a scrollbar may be shown.
-func getHorizontalWindow(items ListItems, selected int, lastFirst int, padding, width, height int) (int, int, bool) {
+// Determines the window to show in multi-column mode.
+// Returns the first item to show, the height of each column,
+// and whether a scrollbar may be shown.
+func multiColumnWindow(items ListItems, selected int, lastFirst int, padding, width, height int) (int, int, bool) {
 	n := items.Len()
 	// Lower bound of number of items that can fit in a row.
 	perRow := (width + listBoxColGap) / (maxWidth(items, padding, 0, n) + listBoxColGap)
@@ -152,5 +153,5 @@ func maxWidth(items ListItems, padding, low, high int) int {
 			width = w
 		}
 	}
-	return width + 2*padding
+	return width + padding
 }

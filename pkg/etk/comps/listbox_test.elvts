@@ -269,9 +269,9 @@ Unused
      }]]
    render
 ┌────────────────────────────────────────┐
-│item0    item2    item4    item6        │
-│#̅̂######  WWWWWWW                        │
-│item1    item3    item5    item7        │
+│item0  item2  item4  item6              │
+│#̅̂####  WWWWW                            │
+│item1  item3  item5  item7              │
 │                                        │
 └────────────────────────────────────────┘
 
@@ -279,17 +279,17 @@ Unused
 ~> setup [&multi-column=$true &items=(etk:-string-items foo bar lorem ipsum)]
    render
 ┌────────────────────────────────────────┐
-│foo    bar    lorem    ipsum            │
-│#̅̂####                                   │
+│foo  bar  lorem  ipsum                  │
+│#̅̂##                                     │
 └────────────────────────────────────────┘
 
 ## rendering all items when multiple rows are needed ##
 ~> setup [&multi-column=$true &items=(etk:-string-items (range 8 | each {|i| put item$i}))]
    render
 ┌────────────────────────────────────────┐
-│item0    item2    item4    item6        │
-│#̅̂######                                 │
-│item1    item3    item5    item7        │
+│item0  item2  item4  item6              │
+│#̅̂####                                   │
+│item1  item3  item5  item7              │
 │                                        │
 └────────────────────────────────────────┘
 
@@ -297,12 +297,12 @@ Unused
 ~> setup [&multi-column=$true &items=(etk:-string-items (range 20 | each {|i| put item$i}))]
    render &height=3
 ┌────────────────────────────────────────┐
-│item0    item2    item4    item6    item│
-│#̅̂######                                 │
-│item1    item3    item5    item7    item│
+│item0  item2  item4  item6  item8  item1│
+│#̅̂####                                   │
+│item1  item3  item5  item7  item9  item1│
 │                                        │
-│                    ━━━━━━━━━━━━━━━━━━━━│
-│WWWWWWWWWWWWWWWWWWWWMMMMMMMMMMMMMMMMMMMM│
+│                        ━━━━━━━━━━━━━━━━│
+│WWWWWWWWWWWWWWWWWWWWWWWWMMMMMMMMMMMMMMMM│
 └────────────────────────────────────────┘
 
 /////////////////////////////////////////////////
@@ -311,153 +311,153 @@ Unused
 
 ## up and down ##
 ~> setup [&multi-column=$true &items=(etk:-string-items foo bar lorem)]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│#̅̂####               │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│#̅̂##         │
+│bar         │
+│            │
+└────────────┘
 ~> send [Down]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│                    │
-│bar                 │
-│#̅̂####               │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│            │
+│bar         │
+│#̅̂##         │
+└────────────┘
 ~> send [Down]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│       #̅̂######      │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│     #̅̂####  │
+│bar         │
+│            │
+└────────────┘
 ~> send [Down]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│       #̅̂######      │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│     #̅̂####  │
+│bar         │
+│            │
+└────────────┘
 ~> send [Up]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│                    │
-│bar                 │
-│#̅̂####               │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│            │
+│bar         │
+│#̅̂##         │
+└────────────┘
 ~> send [Up]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│#̅̂####               │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│#̅̂##         │
+│bar         │
+│            │
+└────────────┘
 ~> send [Up]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│#̅̂####               │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│#̅̂##         │
+│bar         │
+│            │
+└────────────┘
 
 ## tab and shift-tab ##
 ~> setup [&multi-column=$true &items=(etk:-string-items foo bar lorem)]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│#̅̂####               │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│#̅̂##         │
+│bar         │
+│            │
+└────────────┘
 ~> send [Tab]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│                    │
-│bar                 │
-│#̅̂####               │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│            │
+│bar         │
+│#̅̂##         │
+└────────────┘
 ~> send [Tab]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│       #̅̂######      │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│     #̅̂####  │
+│bar         │
+│            │
+└────────────┘
 ~> send [Tab]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│#̅̂####               │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│#̅̂##         │
+│bar         │
+│            │
+└────────────┘
 ~> send [Shift-Tab]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│       #̅̂######      │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│     #̅̂####  │
+│bar         │
+│            │
+└────────────┘
 ~> send [Shift-Tab]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│                    │
-│bar                 │
-│#̅̂####               │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│            │
+│bar         │
+│#̅̂##         │
+└────────────┘
 
 ## left and right ##
 ~> setup [&multi-column=$true &items=(etk:-string-items foo bar lorem)]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│#̅̂####               │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│#̅̂##         │
+│bar         │
+│            │
+└────────────┘
 ~> send [Right]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│       #̅̂######      │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│     #̅̂####  │
+│bar         │
+│            │
+└────────────┘
 ~> send [Right]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│       #̅̂######      │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│     #̅̂####  │
+│bar         │
+│            │
+└────────────┘
 ~> send [Left]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│#̅̂####               │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│#̅̂##         │
+│bar         │
+│            │
+└────────────┘
 ~> send [Left]
-   render &width=20
-┌────────────────────┐
-│foo    lorem        │
-│#̅̂####               │
-│bar                 │
-│                    │
-└────────────────────┘
+   render &width=12
+┌────────────┐
+│foo  lorem  │
+│#̅̂##         │
+│bar         │
+│            │
+└────────────┘
 
 //////////////////
 # custom binding #
