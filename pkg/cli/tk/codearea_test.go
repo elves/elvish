@@ -507,9 +507,9 @@ func TestCodeAreaState_ApplyPending(t *testing.T) {
 		return s
 	}
 	tt.Test(t, applyPending,
-		Args(CodeAreaState{Buffer: CodeBuffer{}, Pending: PendingCode{0, 0, "ls"}}).
+		Args(CodeAreaState{Buffer: CodeBuffer{}, Pending: PendingCode{0, 0, "ls", false}}).
 			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "ls", Dot: 2}, Pending: PendingCode{}}),
-		Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}, Pending: PendingCode{0, 0, "ls"}}).
+		Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}, Pending: PendingCode{0, 0, "ls", false}}).
 			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "lsx", Dot: 3}, Pending: PendingCode{}}),
 		// No-op when Pending is empty.
 		Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}}).

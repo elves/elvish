@@ -63,6 +63,9 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 		_ = err // TODO(xiaq): Report the error.
 	}
 
+	autoSuggestEnabled := newBoolVar(true)
+	var autoSuggestProviderFn eval.Callable
+	autoSuggestProvider := newFnVar(autoSuggestProviderFn)
 	initMaxHeight(&appSpec, nb)
 	initReadlineHooks(&appSpec, ev, nb)
 	initAddCmdFilters(&appSpec, ev, nb, hs)
@@ -70,7 +73,9 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	initInsertAPI(&appSpec, ed, ev, nb)
 	initHighlighter(&appSpec, ed, ev, nb)
 	initPrompts(&appSpec, ed, ev, nb)
+	initAutoSuggestionSpec(&appSpec, hs, autoSuggestEnabled, autoSuggestProvider, ev)
 	ed.app = cli.NewApp(appSpec)
+	initAutoSuggestionAPI(ed.app, autoSuggestEnabled, autoSuggestProvider, nb)
 
 	initExceptionsAPI(ed, nb)
 	initVarsAPI(nb)

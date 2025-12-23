@@ -16,6 +16,7 @@ type view struct {
 }
 
 var stylingForPending = ui.Underlined
+var stylingForAutoSuggestion = ui.Dim
 
 func getView(w *codeArea) *view {
 	s := w.CopyState()
@@ -26,8 +27,13 @@ func getView(w *codeArea) *view {
 	}
 	if pFrom < pTo {
 		// Apply stylingForPending to [pFrom, pTo)
+		styling := stylingForPending
+		if s.Pending.AutoSuggestion {
+			styling = stylingForAutoSuggestion
+		}
+		// Apply styling to [pFrom, pTo)
 		parts := styledCode.Partition(pFrom, pTo)
-		pending := ui.StyleText(parts[1], stylingForPending)
+		pending := ui.StyleText(parts[1], styling)
 		styledCode = ui.Concat(parts[0], pending, parts[2])
 	}
 
@@ -36,7 +42,16 @@ func getView(w *codeArea) *view {
 		rprompt = w.RPrompt()
 	}
 
-	return &view{w.Prompt(), rprompt, styledCode, code.Dot, errors}
+	// For autosuggestions, override the dot position to stay at the original cursor
+	// position (before the suggestion) for rendering purposes only
+	dot := code.Dot
+	if s.Pending.AutoSuggestion && s.Pending.Content != "" && pFrom < pTo {
+		// Only use pFrom if patchPending returned a valid pending range
+		// (pFrom < pTo means it wasn't rejected as invalid)
+		dot = pFrom
+	}
+
+	return &view{w.Prompt(), rprompt, styledCode, dot, errors}
 }
 
 func patchPending(c CodeBuffer, p PendingCode) (CodeBuffer, int, int) {

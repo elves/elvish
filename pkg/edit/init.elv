@@ -41,6 +41,8 @@ set insert:binding = (binding-table [
   &Ctrl-U=    $kill-line-left~
   &Ctrl-K=    $kill-line-right~
 
+  &Ctrl-F=    $auto-suggestion:accept~
+
   &Ctrl-V= $insert-raw~
   &Ctrl-Alt-V= $-insert-key-name~
 
