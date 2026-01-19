@@ -1,18 +1,32 @@
 //each:hier-nav-fixture
+//each:map-hier-in-global
 //each:eval use etk
 
 /////////////
 # rendering #
 /////////////
 
-## foo ##
-~> setup [&hier=[&on-current-path-change={|p|} &get={|p| etk:-string-items foo bar; put ''}]]
+## top-level container item ##
+~> setup [&hier=(map-hier [&a=[&x=foo &y=bar] &b=ipsum])]
    render
 ┌────────────────────────────────────────┐
 │                                        │
 │      ̅̂                                  │
-│      foo            foo                │
-│     ############## ####################│
-│      bar            bar                │
+│      a              x                  │
+│     WWWWWWWWWWWWWW ####################│
+│      b              y                  │
 │                                        │
+└────────────────────────────────────────┘
+
+## top-level leaf item ##
+~> setup [&hier=(map-hier [&a=[&x=foo &y=bar] &b=ipsum])]
+   send [Down]
+   render
+┌────────────────────────────────────────┐
+│                    ipsum               │
+│      ̅̂                                  │
+│      a                                 │
+│     MMMMMMMMMMMMMM                     │
+│      b                                 │
+│     ##############                     │
 └────────────────────────────────────────┘

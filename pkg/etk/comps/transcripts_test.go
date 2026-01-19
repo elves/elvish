@@ -74,6 +74,8 @@ func TestTranscripts(t *testing.T) {
 					}
 				}
 			}),
+		"map-hier-in-global", evaltest.GoFnInGlobal("map-hier",
+			func(m vals.Map) comps.Hier { return comps.MapHier{Map: m} }),
 	)
 }
 
