@@ -36,7 +36,7 @@ func GetMethodMapKeys(v any) MethodMapKeys {
 // but we don't want to expose all of them in this way.
 //
 // For the mechanism that enables bindings in the other direction -
-// using an Elvish map as an interface implemention,
+// using an Elvish map as an interface implementation,
 // see [etk.RegisterStructOfFuncForInterface].
 //
 // This functions returns a value so that it can be called from the top level:
