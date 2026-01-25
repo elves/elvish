@@ -10,10 +10,8 @@
 ~> setup [&hier=(map-hier [&pkg=[&eval=[&a.go=lorem &b.go=ipsum] &pkg.go=foobar] &readme=Hello])]
    render
 ┌────────────────────────────────────────┐
-│                                        │
-│      ̅̂                                  │
 │      pkg            eval               │
-│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│     W̅̂WWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
 │      readme         pkg.go             │
 │                                        │
 └────────────────────────────────────────┘
@@ -23,10 +21,8 @@
    send [Down]
    render
 ┌────────────────────────────────────────┐
-│                    Hello               │
-│      ̅̂                                  │
-│      pkg                               │
-│     MMMMMMMMMMMMMM                     │
+│      pkg           Hello               │
+│     M̅̂MMMMMMMMMMMMM                     │
 │      readme                            │
 │     ##############                     │
 └────────────────────────────────────────┘
@@ -36,10 +32,8 @@
    send [Right]
    render
 ┌────────────────────────────────────────┐
-│                                        │
-│      ̅̂                                  │
 │ pk   eval           a.go               │
-│WWWW WWWWWWWWWWWWWW ####################│
+│WWWW W̅̂WWWWWWWWWWWWW ####################│
 │ re   pkg.go         b.go               │
 │                                        │
 └────────────────────────────────────────┘
@@ -49,10 +43,8 @@
    send [Right Down]
    render
 ┌────────────────────────────────────────┐
-│                    foobar              │
-│      ̅̂                                  │
-│ pk   eval                              │
-│WWWW MMMMMMMMMMMMMM                     │
+│ pk   eval          foobar              │
+│WWWW M̅̂MMMMMMMMMMMMM                     │
 │ re   pkg.go                            │
 │     ##############                     │
 └────────────────────────────────────────┘
@@ -65,30 +57,24 @@
 ~> setup [&hier=(map-hier [&pkg=[&eval=[&a.go=lorem &b.go=ipsum] &pkg.go=foobar] &readme=Hello])]
    render
 ┌────────────────────────────────────────┐
-│                                        │
-│      ̅̂                                  │
 │      pkg            eval               │
-│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│     W̅̂WWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
 │      readme         pkg.go             │
 │                                        │
 └────────────────────────────────────────┘
 ~> send [Down]
    render
 ┌────────────────────────────────────────┐
-│                    Hello               │
-│      ̅̂                                  │
-│      pkg                               │
-│     MMMMMMMMMMMMMM                     │
+│      pkg           Hello               │
+│     M̅̂MMMMMMMMMMMMM                     │
 │      readme                            │
 │     ##############                     │
 └────────────────────────────────────────┘
 ~> send [Up]
    render
 ┌────────────────────────────────────────┐
-│                                        │
-│      ̅̂                                  │
 │      pkg            eval               │
-│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│     W̅̂WWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
 │      readme         pkg.go             │
 │                                        │
 └────────────────────────────────────────┘
@@ -97,60 +83,48 @@
 ~> setup [&hier=(map-hier [&pkg=[&eval=[&a.go=lorem &b.go=ipsum] &pkg.go=foobar] &readme=Hello])]
    render
 ┌────────────────────────────────────────┐
-│                                        │
-│      ̅̂                                  │
 │      pkg            eval               │
-│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│     W̅̂WWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
 │      readme         pkg.go             │
 │                                        │
 └────────────────────────────────────────┘
 ~> send [Right]
    render
 ┌────────────────────────────────────────┐
-│                                        │
-│      ̅̂                                  │
 │ pk   eval           a.go               │
-│WWWW WWWWWWWWWWWWWW ####################│
+│WWWW W̅̂WWWWWWWWWWWWW ####################│
 │ re   pkg.go         b.go               │
 │                                        │
 └────────────────────────────────────────┘
 ~> send [Right]
    render
 ┌────────────────────────────────────────┐
-│                    lorem               │
-│      ̅̂                                  │
-│ ev   a.go                              │
-│WWWW ##############                     │
+│ ev   a.go          lorem               │
+│WWWW #̅̂#############                     │
 │ pk   b.go                              │
 │                                        │
 └────────────────────────────────────────┘
 ~> send [Left]
    render
 ┌────────────────────────────────────────┐
-│                                        │
-│      ̅̂                                  │
 │ pk   eval           a.go               │
-│WWWW WWWWWWWWWWWWWW ####################│
+│WWWW W̅̂WWWWWWWWWWWWW ####################│
 │ re   pkg.go         b.go               │
 │                                        │
 └────────────────────────────────────────┘
 ~> send [Left]
    render
 ┌────────────────────────────────────────┐
-│                                        │
-│      ̅̂                                  │
 │      pkg            eval               │
-│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│     W̅̂WWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
 │      readme         pkg.go             │
 │                                        │
 └────────────────────────────────────────┘
 ~> send [Left] # no effect
    render
 ┌────────────────────────────────────────┐
-│                                        │
-│      ̅̂                                  │
 │      pkg            eval               │
-│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│     W̅̂WWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
 │      readme         pkg.go             │
 │                                        │
 └────────────────────────────────────────┘

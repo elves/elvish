@@ -87,6 +87,7 @@ func hierNavPanel(c etk.Context, h Hier, path []string, toSelect string) (etk.Vi
 		return c.Subcomp(name,
 			etk.ModComp(
 				etk.State(c, "inner-node-comp", ComboBox).Get(),
+				etk.InitState("hide-empty-query", true),
 				etk.InitState("gen-list", func(query string) (ListItems, int) {
 					return items, selected
 				}),
