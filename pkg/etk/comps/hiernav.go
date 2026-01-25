@@ -51,7 +51,6 @@ func HierNav(c etk.Context) (etk.View, etk.React) {
 					pathVar.Set(path[:len(path)-1])
 					return etk.Consumed
 				}
-				return etk.Unused
 			case term.K(ui.Right):
 				if previewPath != nil {
 					pathVar.Set(previewPath)

@@ -2,6 +2,8 @@ package comps
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/ui"
@@ -53,6 +55,9 @@ func makeMapListItems(m vals.Map) mapListItems {
 		_, isMap := v.(vals.Map)
 		items = append(items, mapListItem{vals.ToString(k), isMap})
 	}
+	slices.SortFunc(items, func(a, b mapListItem) int {
+		return strings.Compare(a.name, b.name)
+	})
 	return items
 }
 

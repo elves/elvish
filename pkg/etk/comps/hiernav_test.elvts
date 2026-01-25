@@ -2,31 +2,172 @@
 //each:map-hier-in-global
 //each:eval use etk
 
-/////////////
-# rendering #
-/////////////
+/////////////////////////////////
+# rendering and some navigation #
+/////////////////////////////////
 
-## top-level container item ##
-~> setup [&hier=(map-hier [&a=[&x=foo &y=bar] &b=ipsum])]
+## top-level leaf item ##
+~> setup [&hier=(map-hier [&pkg=[&eval=[&a.go=lorem &b.go=ipsum] &pkg.go=foobar] &readme=Hello])]
    render
 ┌────────────────────────────────────────┐
 │                                        │
 │      ̅̂                                  │
-│      a              x                  │
-│     WWWWWWWWWWWWWW ####################│
-│      b              y                  │
+│      pkg            eval               │
+│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│      readme         pkg.go             │
 │                                        │
 └────────────────────────────────────────┘
 
 ## top-level leaf item ##
-~> setup [&hier=(map-hier [&a=[&x=foo &y=bar] &b=ipsum])]
+~> setup [&hier=(map-hier [&pkg=[&eval=[&a.go=lorem &b.go=ipsum] &pkg.go=foobar] &readme=Hello])]
    send [Down]
    render
 ┌────────────────────────────────────────┐
-│                    ipsum               │
+│                    Hello               │
 │      ̅̂                                  │
-│      a                                 │
+│      pkg                               │
 │     MMMMMMMMMMMMMM                     │
-│      b                                 │
+│      readme                            │
 │     ##############                     │
+└────────────────────────────────────────┘
+
+## inner-level container item ##
+~> setup [&hier=(map-hier [&pkg=[&eval=[&a.go=lorem &b.go=ipsum] &pkg.go=foobar] &readme=Hello])]
+   send [Right]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│      ̅̂                                  │
+│ pk   eval           a.go               │
+│WWWW WWWWWWWWWWWWWW ####################│
+│ re   pkg.go         b.go               │
+│                                        │
+└────────────────────────────────────────┘
+
+## inner-level leaf item ##
+~> setup [&hier=(map-hier [&pkg=[&eval=[&a.go=lorem &b.go=ipsum] &pkg.go=foobar] &readme=Hello])]
+   send [Right Down]
+   render
+┌────────────────────────────────────────┐
+│                    foobar              │
+│      ̅̂                                  │
+│ pk   eval                              │
+│WWWW MMMMMMMMMMMMMM                     │
+│ re   pkg.go                            │
+│     ##############                     │
+└────────────────────────────────────────┘
+
+///////////////////
+# more navigation #
+///////////////////
+
+## navigation downwards and upwards ##
+~> setup [&hier=(map-hier [&pkg=[&eval=[&a.go=lorem &b.go=ipsum] &pkg.go=foobar] &readme=Hello])]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│      ̅̂                                  │
+│      pkg            eval               │
+│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│      readme         pkg.go             │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Down]
+   render
+┌────────────────────────────────────────┐
+│                    Hello               │
+│      ̅̂                                  │
+│      pkg                               │
+│     MMMMMMMMMMMMMM                     │
+│      readme                            │
+│     ##############                     │
+└────────────────────────────────────────┘
+~> send [Up]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│      ̅̂                                  │
+│      pkg            eval               │
+│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│      readme         pkg.go             │
+│                                        │
+└────────────────────────────────────────┘
+
+## navigation rightwards and leftwards ##
+~> setup [&hier=(map-hier [&pkg=[&eval=[&a.go=lorem &b.go=ipsum] &pkg.go=foobar] &readme=Hello])]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│      ̅̂                                  │
+│      pkg            eval               │
+│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│      readme         pkg.go             │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Right]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│      ̅̂                                  │
+│ pk   eval           a.go               │
+│WWWW WWWWWWWWWWWWWW ####################│
+│ re   pkg.go         b.go               │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Right]
+   render
+┌────────────────────────────────────────┐
+│                    lorem               │
+│      ̅̂                                  │
+│ ev   a.go                              │
+│WWWW ##############                     │
+│ pk   b.go                              │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Left]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│      ̅̂                                  │
+│ pk   eval           a.go               │
+│WWWW WWWWWWWWWWWWWW ####################│
+│ re   pkg.go         b.go               │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Left]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│      ̅̂                                  │
+│      pkg            eval               │
+│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│      readme         pkg.go             │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Left] # no effect
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│      ̅̂                                  │
+│      pkg            eval               │
+│     WWWWWWWWWWWWWW WWWWWWWWWWWWWWWWWWWW│
+│      readme         pkg.go             │
+│                                        │
+└────────────────────────────────────────┘
+
+///////////
+# no hier #
+///////////
+
+~> setup [&]
+   render
+┌────────────────────────────────────────┐
+│     hier is nil                        │
+│      ̅̂                                  │
+└────────────────────────────────────────┘
+~> send x # no effect
+   render
+┌────────────────────────────────────────┐
+│     hier is nil                        │
+│      ̅̂                                  │
 └────────────────────────────────────────┘
