@@ -8,12 +8,10 @@ require (
 	go.etcd.io/bbolt v1.3.10
 	golang.org/x/sync v0.17.0
 	golang.org/x/sys v0.37.0
+	golang.org/x/tools v0.38.0
 	pkg.nimblebun.works/go-lsp v1.1.0
 )
 
-require (
-	golang.org/x/mod v0.29.0 // indirect
-	golang.org/x/tools v0.38.0 // indirect
-)
+require golang.org/x/mod v0.29.0 // indirect
 
 go 1.24.0
