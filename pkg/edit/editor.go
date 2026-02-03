@@ -34,6 +34,8 @@ type Editor struct {
 	// set in initHighlighter.
 	applyAutofix func()
 
+	shellIntegration func() bool
+
 	// Maybe move this to another type that represents the REPL cycle as a whole, not just the
 	// read/edit portion represented by the Editor type.
 	AfterCommand []func(src parse.Source, duration float64, err error)
@@ -64,6 +66,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	}
 
 	initMaxHeight(&appSpec, nb)
+	initShellIntegration(&appSpec, ed, nb)
 	initReadlineHooks(&appSpec, ev, nb)
 	initAddCmdFilters(&appSpec, ev, nb, hs)
 	initGlobalBindings(&appSpec, ed, ev, nb)
@@ -133,6 +136,11 @@ func (ed *Editor) RunAfterCommandHooks(src parse.Source, duration float64, err e
 // See https://elv.sh/ref/edit.html for the Elvish API.
 func (ed *Editor) Ns() *eval.Ns {
 	return ed.ns
+}
+
+// ShellIntegration returns whether shell integration is enabled.
+func (ed *Editor) ShellIntegration() bool {
+	return ed.shellIntegration()
 }
 
 func (ed *Editor) notifyf(format string, args ...any) {

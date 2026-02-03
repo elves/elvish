@@ -64,13 +64,21 @@ func patchPending(c CodeBuffer, p PendingCode) (CodeBuffer, int, int) {
 	return CodeBuffer{Content: newContent, Dot: newDot}, p.From, p.From + len(p.Content)
 }
 
-func renderView(v *view, buf *term.BufferBuilder) {
+func renderView(v *view, buf *term.BufferBuilder, shellIntegration bool) {
 	buf.EagerWrap = true
 
+	writeOSC := func(seq string) {
+		if shellIntegration {
+			buf.WriteZeroWidth(seq)
+		}
+	}
+
+	writeOSC(term.OSC133A_I) // OSC 133;A;k=i - start of initial prompt
 	buf.WriteStyled(v.prompt)
 	if len(buf.Lines) == 1 && buf.Col*2 < buf.Width {
 		buf.Indent = buf.Col
 	}
+	writeOSC(term.OSC133B) // OSC 133;B - start of user input
 
 	parts := v.code.Partition(v.dot)
 	buf.
@@ -86,7 +94,12 @@ func renderView(v *view, buf *term.BufferBuilder) {
 		padding := buf.Width - buf.Col - rpromptWidth
 		if padding >= 1 {
 			buf.WriteSpaces(padding)
+			writeOSC(term.OSC133P_R) // OSC 133;P;k=r - right prompt
 			buf.WriteStyled(v.rprompt)
+			// OSC 133;B again - return to input mode after right prompt,
+			// preventing the right prompt marker from making subsequent
+			// input appear as part of the prompt
+			writeOSC(term.OSC133B)
 		}
 	}
 

@@ -69,6 +69,7 @@ type app struct {
 	RPromptPersistent func() bool
 	BeforeReadline    []func()
 	AfterReadline     []func(string)
+	ShellIntegration  func() bool
 	Highlighter       Highlighter
 	Prompt            Prompt
 	RPrompt           Prompt
@@ -99,6 +100,7 @@ func NewApp(spec AppSpec) App {
 		RPromptPersistent: spec.RPromptPersistent,
 		BeforeReadline:    spec.BeforeReadline,
 		AfterReadline:     spec.AfterReadline,
+		ShellIntegration:  spec.ShellIntegration,
 		Highlighter:       spec.Highlighter,
 		Prompt:            spec.Prompt,
 		RPrompt:           spec.RPrompt,
@@ -113,6 +115,9 @@ func NewApp(spec AppSpec) App {
 	}
 	if a.RPromptPersistent == nil {
 		a.RPromptPersistent = func() bool { return false }
+	}
+	if a.ShellIntegration == nil {
+		a.ShellIntegration = func() bool { return true }
 	}
 	if a.Highlighter == nil {
 		a.Highlighter = dummyHighlighter{}
@@ -130,13 +135,14 @@ func NewApp(spec AppSpec) App {
 	lp.RedrawCb(a.redraw)
 
 	a.codeArea = tk.NewCodeArea(tk.CodeAreaSpec{
-		Bindings:    spec.CodeAreaBindings,
-		Highlighter: a.Highlighter.Get,
-		Prompt:      a.Prompt.Get,
-		RPrompt:     a.RPrompt.Get,
-		QuotePaste:  spec.QuotePaste,
-		OnSubmit:    a.CommitCode,
-		State:       spec.CodeAreaState,
+		Bindings:         spec.CodeAreaBindings,
+		Highlighter:      a.Highlighter.Get,
+		Prompt:           a.Prompt.Get,
+		RPrompt:          a.RPrompt.Get,
+		QuotePaste:       spec.QuotePaste,
+		OnSubmit:         a.CommitCode,
+		State:            spec.CodeAreaState,
+		ShellIntegration: a.ShellIntegration,
 
 		SimpleAbbreviations:    spec.SimpleAbbreviations,
 		CommandAbbreviations:   spec.CommandAbbreviations,

@@ -20,6 +20,13 @@ func initMaxHeight(appSpec *cli.AppSpec, nb eval.NsBuilder) {
 	nb.AddVar("max-height", maxHeight)
 }
 
+func initShellIntegration(appSpec *cli.AppSpec, ed *Editor, nb eval.NsBuilder) {
+	shellIntegration := newBoolVar(true)
+	ed.shellIntegration = func() bool { return shellIntegration.GetRaw().(bool) }
+	appSpec.ShellIntegration = ed.shellIntegration
+	nb.AddVar("shell-integration", shellIntegration)
+}
+
 func initReadlineHooks(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder) {
 	initBeforeReadline(appSpec, ev, nb)
 	initAfterReadline(appSpec, ev, nb)

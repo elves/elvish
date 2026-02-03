@@ -46,6 +46,9 @@ type CodeAreaSpec struct {
 	// should be quoted. If this function is not given, the Widget defaults to
 	// not quoting pasted texts.
 	QuotePaste func() bool
+	// A function that returns whether OSC 133 shell integration is enabled.
+	// If this function is not given, the Widget defaults to enabled.
+	ShellIntegration func() bool
 	// A function that is called on the submit event.
 	OnSubmit func()
 
@@ -138,6 +141,9 @@ func NewCodeArea(spec CodeAreaSpec) CodeArea {
 	if spec.QuotePaste == nil {
 		spec.QuotePaste = func() bool { return false }
 	}
+	if spec.ShellIntegration == nil {
+		spec.ShellIntegration = func() bool { return false }
+	}
 	if spec.OnSubmit == nil {
 		spec.OnSubmit = func() {}
 	}
@@ -164,7 +170,7 @@ func (w *codeArea) MaxHeight(width, height int) int {
 func (w *codeArea) render(width int) *term.Buffer {
 	view := getView(w)
 	bb := term.NewBufferBuilder(width)
-	renderView(view, bb)
+	renderView(view, bb, w.ShellIntegration())
 	return bb.Buffer()
 }
 

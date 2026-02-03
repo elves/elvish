@@ -71,7 +71,9 @@ func setup(c testutil.Cleanuper, fns ...func(*fixture)) *fixture {
 		// sure that the tests will work when run as root.
 		"set edit:prompt = { tilde-abbr $pwd; put '> ' }",
 		// This will simplify most tests against the terminal.
-		"set edit:rprompt = { }")
+		"set edit:rprompt = { }",
+		// Disable shell integration in tests to avoid OSC sequences in test output
+		"set edit:shell-integration = $false")
 	f := &fixture{Editor: ed, TTYCtrl: ttyCtrl, Evaler: ev, Store: st, Home: home}
 	for _, fn := range fns {
 		fn(f)

@@ -10,8 +10,9 @@ import (
 // Cell is an indivisible unit on the screen. It is not necessarily 1 column
 // wide.
 type Cell struct {
-	Text  string
-	Style string
+	Text      string
+	Style     string
+	ZeroWidth bool
 }
 
 // Pos is a line/column position.
@@ -23,7 +24,9 @@ type Pos struct {
 func cellsWidth(cs []Cell) int {
 	w := 0
 	for _, c := range cs {
-		w += wcwidth.Of(c.Text)
+		if !c.ZeroWidth {
+			w += wcwidth.Of(c.Text)
+		}
 	}
 	return w
 }

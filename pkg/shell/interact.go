@@ -41,6 +41,7 @@ type interactCfg struct {
 type editor interface {
 	ReadCode() (string, error)
 	RunAfterCommandHooks(src parse.Source, duration float64, err error)
+	ShellIntegration() bool
 }
 
 // Runs an interactive shell session.
@@ -124,12 +125,49 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
-		err = evalInTTY(fds, ev, ed,
+		err = evalInteractive(fds, ev, ed,
 			parse.Source{Name: fmt.Sprintf("[tty %v]", cmdNum), Code: line})
 		if err != nil {
 			diag.ShowError(fds[2], err)
 		}
 	}
+}
+
+// Evaluates interactive commands with shell integration markers.
+func evalInteractive(fds [3]*os.File, ev *eval.Evaler, ed editor, src parse.Source) error {
+	stdout := fds[2]
+	osc133 := ed.ShellIntegration() && sys.IsATTY(stdout.Fd())
+
+	if osc133 {
+		_, _ = stdout.WriteString(term.OSC133C)
+	}
+
+	err := evalInTTY(fds, ev, ed, src)
+
+	if osc133 {
+		exitCode := errorExitCode(err)
+		_, _ = stdout.WriteString(term.OSC133D(exitCode))
+	}
+
+	return err
+}
+
+// Converts an evaluation error to a shell exit code.
+func errorExitCode(err error) int {
+	if err == nil {
+		return 0
+	}
+
+	if exitErr, ok := err.(eval.ExternalCmdExit); ok {
+		ws := exitErr.WaitStatus
+		if ws.Exited() {
+			return ws.ExitStatus()
+		}
+		return 1
+	}
+
+	// All other error kinds (exceptions, etc.)
+	return 1
 }
 
 // Interactive mode panic handler.
@@ -171,6 +209,10 @@ func newMinEditor(in, out *os.File) *minEditor {
 
 func (ed *minEditor) RunAfterCommandHooks(src parse.Source, duration float64, err error) {
 	// no-op; minEditor doesn't support this hook.
+}
+
+func (ed *minEditor) ShellIntegration() bool {
+	return false
 }
 
 func (ed *minEditor) ReadCode() (string, error) {

@@ -87,7 +87,7 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 		bb.Newline()
 		return bb
 	}
-	c := Cell{string(r), style}
+	c := Cell{Text: string(r), Style: style}
 	if r < 0x20 || r == 0x7f {
 		// Always show control characters in reverse video.
 		if style != "" {
@@ -95,7 +95,7 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 		} else {
 			style = "7"
 		}
-		c = Cell{"^" + string(r^0x40), style}
+		c = Cell{Text: "^" + string(r^0x40), Style: style}
 	}
 
 	if bb.Col+wcwidth.Of(c.Text) > bb.Width {
@@ -148,6 +148,15 @@ func (bb *BufferBuilder) WriteStyled(t ui.Text) *BufferBuilder {
 	for _, seg := range t {
 		bb.WriteStringSGR(seg.Text, seg.Style.SGR())
 	}
+	return bb
+}
+
+// WriteZeroWidth writes a zero-width sequence to the buffer. It writes the raw
+// sequence and does not process control characters or apply styling, and
+// because it is written with zero width, the cursor position is unchanged.
+func (bb *BufferBuilder) WriteZeroWidth(sequence string) *BufferBuilder {
+	c := Cell{Text: sequence, Style: "", ZeroWidth: true}
+	bb.Lines[len(bb.Lines)-1] = append(bb.Lines[len(bb.Lines)-1], c)
 	return bb
 }
 

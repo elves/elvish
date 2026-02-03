@@ -40,7 +40,10 @@ type Fixture struct {
 // been started asynchronously.
 func Setup(fns ...func(*cli.AppSpec, TTYCtrl)) *Fixture {
 	tty, ttyCtrl := NewFakeTTY()
-	spec := cli.AppSpec{TTY: tty}
+	spec := cli.AppSpec{
+		TTY:              tty,
+		ShellIntegration: func() bool { return false },
+	}
 	for _, fn := range fns {
 		fn(&spec, ttyCtrl)
 	}
