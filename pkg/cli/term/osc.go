@@ -17,6 +17,9 @@ const (
 	// correctly classify right prompts vs. user input.
 	OSC133P_R = "\033]133;P;k=r\007"
 
+	// OSC133P_S marks a secondary/continuation prompt for multiline input.
+	OSC133P_S = "\033]133;P;k=s\007"
+
 	// OSC133B marks the start of user input. This separates prompts from
 	// command input, enabling proper command copying and selection.
 	OSC133B = "\033]133;B\007"

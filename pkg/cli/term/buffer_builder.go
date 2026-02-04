@@ -19,6 +19,10 @@ type BufferBuilder struct {
 	Lines [][]Cell
 	// Dot is what the user perceives as the cursor.
 	Dot Pos
+	// PreIndent is called before writing indent spaces on continuation lines.
+	PreIndent func()
+	// PostIndent is called after writing indent spaces on continuation lines.
+	PostIndent func()
 }
 
 // NewBufferBuilder makes a new BufferBuilder, initially with one empty line.
@@ -70,8 +74,14 @@ func (bb *BufferBuilder) Newline() *BufferBuilder {
 	bb.appendLine()
 
 	if bb.Indent > 0 {
+		if bb.PreIndent != nil {
+			bb.PreIndent()
+		}
 		for i := 0; i < bb.Indent; i++ {
 			bb.appendCell(Cell{Text: " "})
+		}
+		if bb.PostIndent != nil {
+			bb.PostIndent()
 		}
 	}
 

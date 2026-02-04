@@ -92,6 +92,19 @@ var bufferBuilderTests = []struct {
 	},
 }
 
+func cloneBufferBuilder(bb *BufferBuilder) *BufferBuilder {
+	return &BufferBuilder{
+		Width:      bb.Width,
+		Col:        bb.Col,
+		Indent:     bb.Indent,
+		EagerWrap:  bb.EagerWrap,
+		Lines:      cloneLines(bb.Lines),
+		Dot:        bb.Dot,
+		PreIndent:  bb.PreIndent,
+		PostIndent: bb.PostIndent,
+	}
+}
+
 func TestBufferBuilder(t *testing.T) {
 	for _, test := range bufferBuilderTests {
 		t.Run(test.name, func(t *testing.T) {
@@ -133,8 +146,46 @@ func TestWriteZeroWidth(t *testing.T) {
 	}
 }
 
-func cloneBufferBuilder(bb *BufferBuilder) *BufferBuilder {
-	return &BufferBuilder{
-		bb.Width, bb.Col, bb.Indent,
-		bb.EagerWrap, cloneLines(bb.Lines), bb.Dot}
+func TestIndentHooks(t *testing.T) {
+	tests := []struct {
+		name      string
+		indent    int
+		text      string
+		wantCalls []string
+	}{
+		{
+			name:      "multiline with indent",
+			indent:    2,
+			text:      "line1\nline2\nline3",
+			wantCalls: []string{"pre", "post", "pre", "post"},
+		},
+		{
+			name:      "single line with indent",
+			indent:    2,
+			text:      "single line",
+			wantCalls: nil,
+		},
+		{
+			name:      "multiline without indent",
+			indent:    0,
+			text:      "line1\nline2",
+			wantCalls: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			bb := NewBufferBuilder(20).SetIndent(test.indent)
+
+			var calls []string
+			bb.PreIndent = func() { calls = append(calls, "pre") }
+			bb.PostIndent = func() { calls = append(calls, "post") }
+
+			bb.WriteStringSGR(test.text, "")
+
+			if !reflect.DeepEqual(calls, test.wantCalls) {
+				t.Errorf("hook calls = %v, want %v", calls, test.wantCalls)
+			}
+		})
+	}
 }

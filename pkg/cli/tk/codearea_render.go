@@ -78,6 +78,13 @@ func renderView(v *view, buf *term.BufferBuilder, shellIntegration bool) {
 	if len(buf.Lines) == 1 && buf.Col*2 < buf.Width {
 		buf.Indent = buf.Col
 	}
+	buf.PreIndent = func() {
+		writeOSC(term.OSC133P_S) // OSC 133;P;k=s - secondary prompt
+	}
+	buf.PostIndent = func() {
+		writeOSC(term.OSC133B) // OSC 133;B - return to input mode
+	}
+
 	writeOSC(term.OSC133B) // OSC 133;B - start of user input
 
 	parts := v.code.Partition(v.dot)
@@ -88,6 +95,8 @@ func renderView(v *view, buf *term.BufferBuilder, shellIntegration bool) {
 
 	buf.EagerWrap = false
 	buf.Indent = 0
+	buf.PreIndent = nil
+	buf.PostIndent = nil
 
 	// Handle rprompts with newlines.
 	if rpromptWidth := styledWcswidth(v.rprompt); rpromptWidth > 0 {
