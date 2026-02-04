@@ -73,7 +73,7 @@ func renderView(v *view, buf *term.BufferBuilder, shellIntegration bool) {
 		}
 	}
 
-	writeOSC(term.OSC133A_I) // OSC 133;A;k=i - start of initial prompt
+	writeOSC(term.OSC133A) // OSC 133;A - start of initial prompt
 	buf.WriteStyled(v.prompt)
 	if len(buf.Lines) == 1 && buf.Col*2 < buf.Width {
 		buf.Indent = buf.Col

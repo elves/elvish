@@ -9,9 +9,9 @@ import "fmt"
 // Specification:
 // https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
 const (
-	// OSC133A_I combines prompt start with initial prompt marker (preferred).
-	// This is more efficient than sending OSC133A and OSC133P_I separately.
-	OSC133A_I = "\033]133;A;k=i\007"
+	// OSC133A starts a new command and enters prompt mode. The following
+	// text is assumed to be the initial prompt.
+	OSC133A = "\033]133;A;cl=m\007"
 
 	// OSC133P_R marks a right prompt. This is critical for terminals to
 	// correctly classify right prompts vs. user input.
