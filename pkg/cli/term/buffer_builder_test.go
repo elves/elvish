@@ -17,41 +17,41 @@ var bufferBuilderWritesTests = []struct {
 	{NewBufferBuilder(10), "", "", &Buffer{Width: 10, Lines: [][]Cell{{}}}},
 	// Writing a single rune.
 	{NewBufferBuilder(10), "a", "1",
-		&Buffer{Width: 10, Lines: [][]Cell{{{"a", "1", false}}}}},
+		&Buffer{Width: 10, Lines: [][]Cell{{cell("a", "1")}}}},
 	// Writing control character.
 	{NewBufferBuilder(10), "\033", "",
-		&Buffer{Width: 10, Lines: [][]Cell{{{"^[", "7", false}}}}},
+		&Buffer{Width: 10, Lines: [][]Cell{{cell("^[", "7")}}}},
 	// Writing styled control character.
 	{NewBufferBuilder(10), "a\033b", "1",
 		&Buffer{Width: 10, Lines: [][]Cell{{
-			{"a", "1", false},
-			{"^[", "1;7", false},
-			{"b", "1", false}}}}},
+			cell("a", "1"),
+			cell("^[", "1;7"),
+			cell("b", "1")}}}},
 	// Writing text containing a newline.
 	{NewBufferBuilder(10), "a\nb", "1",
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"a", "1", false}}, {{"b", "1", false}}}}},
+			{cell("a", "1")}, {cell("b", "1")}}}},
 	// Writing text containing a newline when there is indent.
 	{NewBufferBuilder(10).SetIndent(2), "a\nb", "1",
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"a", "1", false}},
-			{{" ", "", false}, {" ", "", false}, {"b", "1", false}},
+			{cell("a", "1")},
+			{cell(" ", ""), cell(" ", ""), cell("b", "1")},
 		}}},
 	// Writing long text that triggers wrapping.
 	{NewBufferBuilder(4), "aaaab", "1",
 		&Buffer{Width: 4, Lines: [][]Cell{
-			{{"a", "1", false}, {"a", "1", false}, {"a", "1", false}, {"a", "1", false}},
-			{{"b", "1", false}}}}},
+			{cell("a", "1"), cell("a", "1"), cell("a", "1"), cell("a", "1")},
+			{cell("b", "1")}}}},
 	// Writing long text that triggers wrapping when there is indent.
 	{NewBufferBuilder(4).SetIndent(2), "aaaab", "1",
 		&Buffer{Width: 4, Lines: [][]Cell{
-			{{"a", "1", false}, {"a", "1", false}, {"a", "1", false}, {"a", "1", false}},
-			{{" ", "", false}, {" ", "", false}, {"b", "1", false}}}}},
+			{cell("a", "1"), cell("a", "1"), cell("a", "1"), cell("a", "1")},
+			{cell(" ", ""), cell(" ", ""), cell("b", "1")}}}},
 	// Writing long text that triggers eager wrapping.
 	{NewBufferBuilder(4).SetIndent(2).SetEagerWrap(true), "aaaa", "1",
 		&Buffer{Width: 4, Lines: [][]Cell{
-			{{"a", "1", false}, {"a", "1", false}, {"a", "1", false}, {"a", "1", false}},
-			{{" ", "", false}, {" ", "", false}}}}},
+			{cell("a", "1"), cell("a", "1"), cell("a", "1"), cell("a", "1")},
+			{cell(" ", ""), cell(" ", "")}}}},
 }
 
 // TestBufferBuilderWrites tests BufferBuilder.Writes by calling Writes on a
@@ -86,8 +86,8 @@ var bufferBuilderTests = []struct {
 			"bar",
 		),
 		&Buffer{Width: 10, Dot: Pos{0, 4}, Lines: [][]Cell{
-			{{"f", "4", false}, {"o", "4", false}, {"o", "", false}, {" ", "", false}},
-			{{"b", "", false}, {"a", "", false}, {"r", "", false}},
+			{cell("f", "4"), cell("o", "4"), cell("o", ""), cell(" ", "")},
+			{cell("b", ""), cell("a", ""), cell("r", "")},
 		}},
 	},
 }
@@ -124,10 +124,10 @@ func TestWriteZeroWidth(t *testing.T) {
 	want := &Buffer{
 		Width: 10,
 		Lines: [][]Cell{{
-			{"p", "", false}, {"r", "", false}, {"o", "", false},
-			{"m", "", false}, {"p", "", false}, {"t", "", false},
-			{"\033]133;A\007", "", true}, // zero-width
-			{">", "", false}, {" ", "", false},
+			cell("p", ""), cell("r", ""), cell("o", ""),
+			cell("m", ""), cell("p", ""), cell("t", ""),
+			{"\033]133;A\007", "", 0}, // zero-width
+			cell(">", ""), cell(" ", ""),
 		}},
 	}
 

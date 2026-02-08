@@ -78,7 +78,7 @@ func (bb *BufferBuilder) Newline() *BufferBuilder {
 			bb.PreIndent()
 		}
 		for i := 0; i < bb.Indent; i++ {
-			bb.appendCell(Cell{Text: " "})
+			bb.appendCell(Cell{Text: " ", Width: 1})
 		}
 		if bb.PostIndent != nil {
 			bb.PostIndent()
@@ -97,7 +97,7 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 		bb.Newline()
 		return bb
 	}
-	c := Cell{Text: string(r), Style: style}
+	c := Cell{Text: string(r), Style: style, Width: wcwidth.OfRune(r)}
 	if r < 0x20 || r == 0x7f {
 		// Always show control characters in reverse video.
 		if style != "" {
@@ -105,7 +105,8 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 		} else {
 			style = "7"
 		}
-		c = Cell{Text: "^" + string(r^0x40), Style: style}
+		s := "^" + string(r^0x40)
+		c = Cell{Text: s, Style: style, Width: wcwidth.Of(s)}
 	}
 
 	if bb.Col+wcwidth.Of(c.Text) > bb.Width {
@@ -165,7 +166,7 @@ func (bb *BufferBuilder) WriteStyled(t ui.Text) *BufferBuilder {
 // sequence and does not process control characters or apply styling, and
 // because it is written with zero width, the cursor position is unchanged.
 func (bb *BufferBuilder) WriteZeroWidth(sequence string) *BufferBuilder {
-	c := Cell{Text: sequence, Style: "", ZeroWidth: true}
+	c := Cell{Text: sequence}
 	bb.Lines[len(bb.Lines)-1] = append(bb.Lines[len(bb.Lines)-1], c)
 	return bb
 }
@@ -174,6 +175,7 @@ func makeSpacing(n int) []Cell {
 	s := make([]Cell, n)
 	for i := 0; i < n; i++ {
 		s[i].Text = " "
+		s[i].Width = 1
 	}
 	return s
 }
