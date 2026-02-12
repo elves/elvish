@@ -150,6 +150,23 @@ press Enter, it is erased. If you want to keep it, simply set
 set edit:rprompt-persistent = $true
 ```
 
+### Shell Integration
+
+Elvish supports
+[OSC 133 semantic prompt sequences](https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md),
+which enable terminal emulators to understand shell command structure. This
+allows terminals with OSC 133 support to provide features like command
+navigation, intelligent output selection, and command status indicators.
+
+Shell integration is enabled by default. Terminal emulators that don't
+support these sequences will simply ignore them.
+
+To disable shell integration:
+
+```elvish
+set edit:shell-integration = $false
+```
+
 ## Keybindings
 
 Each mode has its own keybinding, accessible as the `binding` variable in its

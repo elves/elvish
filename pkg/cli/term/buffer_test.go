@@ -3,14 +3,22 @@ package term
 import (
 	"reflect"
 	"testing"
+
+	"src.elv.sh/pkg/wcwidth"
 )
+
+func cell(text, style string) Cell {
+	return Cell{Text: text, Style: style, Width: wcwidth.Of(text)}
+}
 
 var cellsWidthTests = []struct {
 	cells     []Cell
 	wantWidth int
 }{
 	{[]Cell{}, 0},
-	{[]Cell{{"a", ""}, {"好", ""}}, 3},
+	{[]Cell{cell("a", ""), cell("好", "")}, 3},
+	{[]Cell{{"\033]133;A\007", "", 0}}, 0},
+	{[]Cell{cell("a", ""), {"\033]133;B\007", "", 0}, cell("b", "")}, 2},
 }
 
 func TestCellsWidth(t *testing.T) {
@@ -27,8 +35,8 @@ var makeSpacingTests = []struct {
 	want []Cell
 }{
 	{0, []Cell{}},
-	{1, []Cell{{" ", ""}}},
-	{4, []Cell{{" ", ""}, {" ", ""}, {" ", ""}, {" ", ""}}},
+	{1, []Cell{cell(" ", "")}},
+	{4, []Cell{cell(" ", ""), cell(" ", ""), cell(" ", ""), cell(" ", "")}},
 }
 
 func TestMakeSpacing(t *testing.T) {
@@ -46,15 +54,15 @@ var compareCellsTests = []struct {
 	wantIndex int
 }{
 	{[]Cell{}, []Cell{}, true, 0},
-	{[]Cell{}, []Cell{{"a", ""}}, false, 0},
+	{[]Cell{}, []Cell{cell("a", "")}, false, 0},
 	{
-		[]Cell{{"a", ""}, {"好", ""}, {"b", ""}},
-		[]Cell{{"a", ""}, {"好", ""}, {"c", ""}},
+		[]Cell{cell("a", ""), cell("好", ""), cell("b", "")},
+		[]Cell{cell("a", ""), cell("好", ""), cell("c", "")},
 		false, 2,
 	},
 	{
-		[]Cell{{"a", ""}, {"好", ""}, {"b", ""}},
-		[]Cell{{"a", ""}, {"好", "1"}, {"c", ""}},
+		[]Cell{cell("a", ""), cell("好", ""), cell("b", "")},
+		[]Cell{cell("a", ""), cell("好", "1"), cell("c", "")},
 		false, 1,
 	},
 }
@@ -79,7 +87,7 @@ var bufferCursorTests = []struct {
 		Pos{0, 0},
 	},
 	{
-		&Buffer{Width: 10, Lines: [][]Cell{{{"a", ""}}, {{"好", ""}}}},
+		&Buffer{Width: 10, Lines: [][]Cell{{cell("a", "")}, {cell("好", "")}}},
 		Pos{1, 2},
 	},
 }
@@ -100,42 +108,42 @@ var bufferTrimToLinesTests = []struct {
 }{
 	{
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"a", ""}}, {{"b", ""}}, {{"c", ""}}, {{"d", ""}},
+			{cell("a", "")}, {cell("b", "")}, {cell("c", "")}, {cell("d", "")},
 		}},
 		0, 2,
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"a", ""}}, {{"b", ""}},
+			{cell("a", "")}, {cell("b", "")},
 		}},
 	},
 	// Negative low is treated as 0.
 
 	{
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"a", ""}}, {{"b", ""}}, {{"c", ""}}, {{"d", ""}},
+			{cell("a", "")}, {cell("b", "")}, {cell("c", "")}, {cell("d", "")},
 		}},
 		-1, 2,
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"a", ""}}, {{"b", ""}},
+			{cell("a", "")}, {cell("b", "")},
 		}},
 	},
 	// With dot.
 	{
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"a", ""}}, {{"b", ""}}, {{"c", ""}}, {{"d", ""}},
+			{cell("a", "")}, {cell("b", "")}, {cell("c", "")}, {cell("d", "")},
 		}, Dot: Pos{1, 1}},
 		1, 3,
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"b", ""}}, {{"c", ""}},
+			{cell("b", "")}, {cell("c", "")},
 		}, Dot: Pos{0, 1}},
 	},
 	// With dot that is going to be trimmed away.
 	{
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"a", ""}}, {{"b", ""}}, {{"c", ""}}, {{"d", ""}},
+			{cell("a", "")}, {cell("b", "")}, {cell("c", "")}, {cell("d", "")},
 		}, Dot: Pos{0, 1}},
 		1, 3,
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"b", ""}}, {{"c", ""}},
+			{cell("b", "")}, {cell("c", "")},
 		}, Dot: Pos{0, 1}},
 	},
 }
@@ -159,29 +167,29 @@ var bufferExtendDownTests = []struct {
 }{
 	{
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"a", ""}}, {{"b", ""}}}},
+			{cell("a", "")}, {cell("b", "")}}},
 		&Buffer{Width: 11, Lines: [][]Cell{
-			{{"c", ""}}, {{"d", ""}}}},
+			{cell("c", "")}, {cell("d", "")}}},
 		false,
 		&Buffer{Width: 11, Lines: [][]Cell{
-			{{"a", ""}}, {{"b", ""}},
-			{{"c", ""}}, {{"d", ""}}}},
+			{cell("a", "")}, {cell("b", "")},
+			{cell("c", "")}, {cell("d", "")}}},
 	},
 	// Moving dot.
 	{
 		&Buffer{Width: 10, Lines: [][]Cell{
-			{{"a", ""}}, {{"b", ""}}}},
+			{cell("a", "")}, {cell("b", "")}}},
 		&Buffer{
 			Width: 11,
-			Lines: [][]Cell{{{"c", ""}}, {{"d", ""}}},
+			Lines: [][]Cell{{cell("c", "")}, {cell("d", "")}},
 			Dot:   Pos{1, 1},
 		},
 		true,
 		&Buffer{
 			Width: 11,
 			Lines: [][]Cell{
-				{{"a", ""}}, {{"b", ""}},
-				{{"c", ""}}, {{"d", ""}}},
+				{cell("a", "")}, {cell("b", "")},
+				{cell("c", "")}, {cell("d", "")}},
 			Dot: Pos{3, 1},
 		},
 	},
@@ -206,55 +214,55 @@ var bufferExtendRightTests = []struct {
 }{
 	// No padding, equal height.
 	{
-		&Buffer{Width: 1, Lines: [][]Cell{{{"a", ""}}, {{"b", ""}}}},
-		&Buffer{Width: 1, Lines: [][]Cell{{{"c", ""}}, {{"d", ""}}}},
+		&Buffer{Width: 1, Lines: [][]Cell{{cell("a", "")}, {cell("b", "")}}},
+		&Buffer{Width: 1, Lines: [][]Cell{{cell("c", "")}, {cell("d", "")}}},
 		false,
 		&Buffer{Width: 2, Lines: [][]Cell{
-			{{"a", ""}, {"c", ""}},
-			{{"b", ""}, {"d", ""}}}},
+			{cell("a", ""), cell("c", "")},
+			{cell("b", ""), cell("d", "")}}},
 	},
 	// With padding, equal height.
 	{
-		&Buffer{Width: 2, Lines: [][]Cell{{{"a", ""}}, {{"b", ""}}}},
-		&Buffer{Width: 1, Lines: [][]Cell{{{"c", ""}}, {{"d", ""}}}},
+		&Buffer{Width: 2, Lines: [][]Cell{{cell("a", "")}, {cell("b", "")}}},
+		&Buffer{Width: 1, Lines: [][]Cell{{cell("c", "")}, {cell("d", "")}}},
 		false,
 		&Buffer{Width: 3, Lines: [][]Cell{
-			{{"a", ""}, {" ", ""}, {"c", ""}},
-			{{"b", ""}, {" ", ""}, {"d", ""}}}},
+			{cell("a", ""), cell(" ", ""), cell("c", "")},
+			{cell("b", ""), cell(" ", ""), cell("d", "")}}},
 	},
 	// buf is higher.
 	{
 		&Buffer{Width: 1, Lines: [][]Cell{
-			{{"a", ""}}, {{"b", ""}}, {{"x", ""}}}},
+			{cell("a", "")}, {cell("b", "")}, {cell("x", "")}}},
 		&Buffer{Width: 1, Lines: [][]Cell{
-			{{"c", ""}}, {{"d", ""}},
+			{cell("c", "")}, {cell("d", "")},
 		}},
 		false,
 		&Buffer{Width: 2, Lines: [][]Cell{
-			{{"a", ""}, {"c", ""}},
-			{{"b", ""}, {"d", ""}},
-			{{"x", ""}}}},
+			{cell("a", ""), cell("c", "")},
+			{cell("b", ""), cell("d", "")},
+			{cell("x", "")}}},
 	},
 	// buf2 is higher.
 	{
-		&Buffer{Width: 1, Lines: [][]Cell{{{"a", ""}}, {{"b", ""}}}},
+		&Buffer{Width: 1, Lines: [][]Cell{{cell("a", "")}, {cell("b", "")}}},
 		&Buffer{Width: 1, Lines: [][]Cell{
-			{{"c", ""}}, {{"d", ""}}, {{"e", ""}},
+			{cell("c", "")}, {cell("d", "")}, {cell("e", "")},
 		}},
 		false,
 		&Buffer{Width: 2, Lines: [][]Cell{
-			{{"a", ""}, {"c", ""}},
-			{{"b", ""}, {"d", ""}},
-			{{" ", ""}, {"e", ""}}}},
+			{cell("a", ""), cell("c", "")},
+			{cell("b", ""), cell("d", "")},
+			{cell(" ", ""), cell("e", "")}}},
 	},
 	// Moving the dot.
 	{
-		&Buffer{Width: 1, Lines: [][]Cell{{{"a", ""}}, {{"b", ""}}}},
-		&Buffer{Width: 1, Lines: [][]Cell{{{"c", ""}}, {{"d", ""}}}},
+		&Buffer{Width: 1, Lines: [][]Cell{{cell("a", "")}, {cell("b", "")}}},
+		&Buffer{Width: 1, Lines: [][]Cell{{cell("c", "")}, {cell("d", "")}}},
 		true,
 		&Buffer{Width: 2, Dot: Pos{0, 1}, Lines: [][]Cell{
-			{{"a", ""}, {"c", ""}},
-			{{"b", ""}, {"d", ""}}}},
+			{cell("a", ""), cell("c", "")},
+			{cell("b", ""), cell("d", "")}}},
 	},
 }
 

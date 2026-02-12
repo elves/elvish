@@ -3,15 +3,13 @@ package term
 import (
 	"fmt"
 	"strings"
-
-	"src.elv.sh/pkg/wcwidth"
 )
 
-// Cell is an indivisible unit on the screen. It is not necessarily 1 column
-// wide.
+// Cell is an indivisible unit on the screen.
 type Cell struct {
 	Text  string
 	Style string
+	Width int
 }
 
 // Pos is a line/column position.
@@ -23,7 +21,7 @@ type Pos struct {
 func cellsWidth(cs []Cell) int {
 	w := 0
 	for _, c := range cs {
-		w += wcwidth.Of(c.Text)
+		w += c.Width
 	}
 	return w
 }
@@ -158,7 +156,7 @@ func (b *Buffer) TTYString() string {
 				lastStyle = cell.Style
 			}
 			sb.WriteString(cell.Text)
-			usedWidth += wcwidth.Of(cell.Text)
+			usedWidth += cell.Width
 		}
 		if lastStyle != "" {
 			sb.WriteString("\033[m")

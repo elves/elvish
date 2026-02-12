@@ -12,6 +12,7 @@ type AppSpec struct {
 	RPromptPersistent func() bool
 	BeforeReadline    []func()
 	AfterReadline     []func(string)
+	ShellIntegration  func() bool
 
 	Highlighter Highlighter
 	Prompt      Prompt
