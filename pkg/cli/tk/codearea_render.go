@@ -1,6 +1,8 @@
 package tk
 
 import (
+	"os"
+
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/ui"
 	"src.elv.sh/pkg/wcwidth"
@@ -73,7 +75,7 @@ func renderView(v *view, buf *term.BufferBuilder, shellIntegration bool) {
 		}
 	}
 
-	writeOSC(term.OSC133A) // OSC 133;A - start of initial prompt
+	writeOSC(term.OSC133A(os.Getpid())) // OSC 133;A - start of initial prompt
 	buf.WriteStyled(v.prompt)
 	if len(buf.Lines) == 1 && buf.Col*2 < buf.Width {
 		buf.Indent = buf.Col

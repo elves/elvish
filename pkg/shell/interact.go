@@ -146,7 +146,7 @@ func evalInteractive(fds [3]*os.File, ev *eval.Evaler, ed editor, src parse.Sour
 
 	if osc133 {
 		exitCode := errorExitCode(err)
-		_, _ = stdout.WriteString(term.OSC133D(exitCode))
+		_, _ = stdout.WriteString(term.OSC133D(exitCode, os.Getpid()))
 	}
 
 	return err

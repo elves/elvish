@@ -9,10 +9,6 @@ import "fmt"
 // Specification:
 // https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
 const (
-	// OSC133A starts a new command and enters prompt mode. The following
-	// text is assumed to be the initial prompt.
-	OSC133A = "\033]133;A;cl=m\007"
-
 	// OSC133P_R marks a right prompt. This is critical for terminals to
 	// correctly classify right prompts vs. user input.
 	OSC133P_R = "\033]133;P;k=r\007"
@@ -28,7 +24,13 @@ const (
 	OSC133C = "\033]133;C\007"
 )
 
+// OSC133A returns the sequence that starts a new command and enters prompt
+// mode. The following text is assumed to be the initial prompt.
+func OSC133A(pid int) string {
+	return fmt.Sprintf("\033]133;A;cl=m;aid=%d\007", pid)
+}
+
 // OSC133D returns the sequence marking command execution end with exit code.
-func OSC133D(exitCode int) string {
-	return fmt.Sprintf("\033]133;D;%d\007", exitCode)
+func OSC133D(exitCode int, pid int) string {
+	return fmt.Sprintf("\033]133;D;%d;aid=%d\007", exitCode, pid)
 }
