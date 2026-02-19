@@ -156,7 +156,7 @@ set -method-handler = [
 
       if $git-reference {
         tmp pwd = $dest
-        git checkout --detach $git-reference
+        git checkout $git-reference
       }
     }
 
