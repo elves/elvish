@@ -396,11 +396,11 @@ fn -get-all-dependencies {|metadata|
   var all-dependencies = []
 
   if (has-key $metadata dependencies) {
-    set all-dependencies = [$@all-dependencies (all $metadata[dependencies])]
+    set all-dependencies = (conj $all-dependencies (all $metadata[dependencies]))
   }
 
   if (has-key $metadata devDependencies) {
-    set all-dependencies = [$@all-dependencies (all $metadata[devDependencies])]
+    set all-dependencies = (conj $all-dependencies (all $metadata[devDependencies]))
   }
 
   put $all-dependencies
