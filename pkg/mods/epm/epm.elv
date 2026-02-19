@@ -11,6 +11,9 @@ var rsync~ = $e:rsync~
 # Verbosity configuration
 var debug-mode = $false
 
+# Version separator
+var -version-separator = @
+
 # Configuration for common domains
 var -default-domain-config = [
   &"github.com"= [
@@ -46,6 +49,8 @@ var managed-dir = (
   }
 )
 
+var -managed-dir-length = (count $managed-dir)
+
 # General utility functions
 
 fn -debug {|text|
@@ -71,7 +76,8 @@ fn -error {|text|
 }
 
 fn dest {|pkg|
-  put $managed-dir/$pkg
+  str:replace $-version-separator / $pkg |
+    put $managed-dir/(all)
 }
 
 # Returns a boolean value indicating whether the given package is installed.
@@ -98,6 +104,25 @@ fn -tilde-expand {|p|
   re:replace "^~" $E:HOME $p
 }
 
+# Split "pkg" into "package-name" and "version";
+# if the latter is missing, its returned component will be $nil.
+fn -split-package-name-and-version {|pkg|
+  var last-version-separator-index = (str:last-index $pkg $-version-separator)
+
+  if (>= $last-version-separator-index 0) {
+    put $pkg[..$last-version-separator-index]
+
+    put $pkg[(+ $last-version-separator-index 1)..]
+  } else {
+    put $pkg $nil
+  }
+}
+
+# Return the source URL of a Git package
+fn -get-git-source {|package-name dom-cfg|
+  put $dom-cfg[protocol]"://"$package-name
+}
+
 # Known method handlers. Each entry is indexed by method name (the
 # value of the "method" key in the domain configs), and must contain
 # two keys: install and upgrade, each one must be a closure that
@@ -113,14 +138,26 @@ var -method-handler
 set -method-handler = [
   &git= [
     &src= {|pkg dom-cfg|
-      put $dom-cfg[protocol]"://"$pkg
+      var package-name _ = (-split-package-name-and-version $pkg)
+
+      -get-git-source $package-name $dom-cfg
     }
 
     &install= {|pkg dom-cfg|
       var dest = (dest $pkg)
       -info "Installing "$pkg
       os:mkdir-all $dest
-      git clone ($-method-handler[git][src] $pkg $dom-cfg) $dest
+
+      var package-name git-reference = (-split-package-name-and-version $pkg)
+
+      var git-source = (-get-git-source $package-name $dom-cfg)
+
+      git clone $git-source $dest
+
+      if $git-reference {
+        tmp pwd = $dest
+        git checkout $git-reference
+      }
     }
 
     &upgrade= {|pkg dom-cfg|
@@ -315,16 +352,39 @@ fn query {|pkg|
 # Return an array with all installed packages. `epm:list` can be used as an alias
 # for `epm:installed`.
 fn installed {
-  put $managed-dir/*[nomatch-ok] | each {|dir|
-    var dom = (str:replace $managed-dir/ '' $dir)
+  put $managed-dir/*[type:dir][nomatch-ok] | each {|domain-dir|
+    var dom = $domain-dir[(+ $-managed-dir-length 1)..]
+
     var cfg = (-domain-config $dom)
     # Only list domains for which we know the config, so that the user
     # can have his own non-package directories under ~/.elvish/lib
     # without conflicts.
     if $cfg {
-      var lvl = $cfg[levels]
-      var pat = '^\Q'$managed-dir'/\E('(repeat (+ $lvl 1) '[^/]+' | str:join '/')')/$'
-      put (each {|d| re:find $pat $d } [ $managed-dir/$dom/**[nomatch-ok]/ ] )[groups][1][text]
+      var domain-package-pattern = (
+        repeat (+ $cfg[levels] 1) '[^/]+' |
+          str:join / |
+          put '^'(re:quote $managed-dir/)'('(all)')/$'
+      )
+
+      put $managed-dir/$dom/**[nomatch-ok]/ |
+        each {|subdir| re:find $domain-package-pattern $subdir } |
+        put (all)[groups][1][text] |
+        each {|pkg|
+          var regular-file-count = (
+            put $managed-dir/$pkg/*[type:regular][nomatch-ok] |
+              count
+          )
+
+          if (> $regular-file-count 0) {
+            put $pkg
+          } else {
+            put $managed-dir/$pkg/*[type:dir][nomatch-ok] | each {|entry|
+              str:last-index $entry / |
+                assoc $entry (all) $-version-separator |
+                put (all)[(+ $-managed-dir-length 1)..]
+            }
+          }
+        }
     }
   }
 }
@@ -332,18 +392,49 @@ fn installed {
 # epm:list is an alias for epm:installed
 fn list { installed }
 
+fn -get-all-dependencies {|metadata|
+  var all-dependencies = []
+
+  if (has-key $metadata dependencies) {
+    set all-dependencies = (conj $all-dependencies (all $metadata[dependencies]))
+  }
+
+  if (has-key $metadata devDependencies) {
+    set all-dependencies = (conj $all-dependencies (all $metadata[devDependencies]))
+  }
+
+  put $all-dependencies
+}
+
 # Install the named packages. By default, if a package is already installed, a
 # message will be shown. This can be disabled by passing
 # `&silent-if-installed=$true`, so that already-installed packages are silently
 # ignored.
+#
+# When no packages are passed, read all the dependencies
+# from the `dependencies` and `devDependencies` keys
+# in the metadata descriptor within the current directory.
 fn install {|&silent-if-installed=$false @pkgs|
+  var actual-packages = (
+    if (not-eq $pkgs []) {
+      put $pkgs
+    } else {
+      if (os:is-regular metadata.json) {
+        from-json < metadata.json |
+          -get-all-dependencies (all)
+      } else {
+        put []
+      }
+    }
+  )
+
   # Install and upgrade are method-specific, so we call the
   # corresponding functions using -package-op
-  if (eq $pkgs []) {
+  if (eq $actual-packages []) {
     -error "You must specify at least one package."
     return
   }
-  for pkg $pkgs {
+  for pkg $actual-packages {
     if (is-installed $pkg) {
       if (not $silent-if-installed) {
         -info "Package "$pkg" is already installed."
