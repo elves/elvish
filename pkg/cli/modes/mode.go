@@ -17,8 +17,12 @@ var ErrFocusedWidgetNotCodeArea = errors.New("focused widget is not a code area"
 // FocusedCodeArea returns a CodeArea widget if the currently focused widget is
 // a CodeArea. Otherwise it returns the error ErrFocusedWidgetNotCodeArea.
 func FocusedCodeArea(a cli.App) (tk.CodeArea, error) {
-	if w, ok := a.FocusedWidget().(tk.CodeArea); ok {
+	widget := a.FocusedWidget()
+	if w, ok := widget.(tk.CodeArea); ok {
 		return w, nil
+	}
+	if w, ok := widget.(tk.ComboBox); ok {
+		return w.CodeArea(), nil
 	}
 	return nil, ErrFocusedWidgetNotCodeArea
 }
