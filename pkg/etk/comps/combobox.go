@@ -14,7 +14,7 @@ import (
 // this behavior is controlled by the hide-empty-query state variable.
 func ComboBox(c etk.Context) (etk.View, etk.React) {
 	// API
-	genListVar := etk.State(c, "gen-list", func(string) (ListItems, int) {
+	genListVar := etk.State(c, "gen-list", func(string) (any, int) {
 		return nil, -1
 	})
 	hideEmptyQueryVar := etk.State(c, "hide-empty-query", false)
@@ -25,7 +25,7 @@ func ComboBox(c etk.Context) (etk.View, etk.React) {
 		queryView = etk.EmptyView{}
 	}
 
-	listItemsVar := etk.BindState(c, "list/items", ListItems(nil))
+	listItemsVar := etk.BindState(c, "list/items", any(nil))
 	listSelectedVar := etk.BindState(c, "list/selected", 0)
 
 	lastQueryContentVar := etk.State(c, "-last-query-content", "")

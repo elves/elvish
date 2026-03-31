@@ -3,39 +3,66 @@ package comps
 import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/mtd"
 	"src.elv.sh/pkg/ui"
 	"src.elv.sh/pkg/wcwidth"
 )
 
-// ListItems stores the items to show in a [ListBox].
-type ListItems interface {
-	// Len returns the number of items.
-	Len() int
-	// Get accesses the underlying item.
-	Get(i int) any
-	// Show renders the item at the given zero-based index,
+// Interface for the items state of a listbox.
+var (
+	// ListItemsLen returns the number of items.
+	ListItemsLen = mtd.New[func(fm *eval.Frame, x any) (int, error)]("Len")
+	// ListItemsGet accesses the underlying item.
+	ListItemsGet = mtd.New[func(fm *eval.Frame, x any, i int) (any, error)]("Get")
+	// ListItemsShow renders the item at the given zero-based index,
 	// also returning the "area styling" for the item,
 	// which is applied to the entire area occupied by the item in the listbox.
-	Show(i int) (ui.Text, ui.Styling)
+	ListItemsShow = mtd.New[func(fm *eval.Frame, x any, i int) (ui.Text, ui.Styling, error)]("Show")
+)
+
+func CallListItemsLen(c etk.Context, x any) int {
+	n, err := ListItemsLen.Call(c.Frame(), x)
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
-type stringItems []string
+func CallListItemsGet(c etk.Context, x any, i int) any {
+	item, err := ListItemsGet.Call(c.Frame(), x, i)
+	if err != nil {
+		return nil
+	}
+	return item
+}
 
-// StringItems returns a [ListItems] backed up a slice of strings.
-func StringItems(items ...string) ListItems             { return stringItems(items) }
-func (si stringItems) Len() int                         { return len(si) }
-func (si stringItems) Get(i int) any                    { return si[i] }
-func (si stringItems) Show(i int) (ui.Text, ui.Styling) { return ui.T(si[i]), ui.Nop }
+func CallListItemsShow(c etk.Context, x any, i int) (ui.Text, ui.Styling) {
+	t, st, err := ListItemsShow.Call(c.Frame(), x, i)
+	if err != nil {
+		return ui.T("???"), ui.FgRed
+	}
+	return t, st
+}
+
+type StringItems []string
+
+// MakeStringItems returns a value to be used for the items state of a listbox,
+// backed by a slice of strings.
+func MakeStringItems(items ...string) StringItems       { return StringItems(items) }
+func (si StringItems) Len() int                         { return len(si) }
+func (si StringItems) Get(i int) any                    { return si[i] }
+func (si StringItems) Show(i int) (ui.Text, ui.Styling) { return ui.T(si[i]), ui.Nop }
 
 // ListBox shows a list of items and supports choosing one of them.
 //
 // State variables:
 //
-//   - items: a [ListItems]
+//   - items: a list of items
 //   - selected: an int storing the index of the selected item
 func ListBox(c etk.Context) (etk.View, etk.React) {
 	// Essential state variables.
-	itemsVar := etk.State(c, "items", ListItems(nil))
+	itemsVar := etk.State(c, "items", any(nil))
 	selectedVar := etk.State(c, "selected", 0)
 	// Layout configuration variables.
 	multiColumnVar := etk.State(c, "multi-column", false)
@@ -46,14 +73,14 @@ func ListBox(c etk.Context) (etk.View, etk.React) {
 	contentHeightVar := etk.State(c, "-content-height", 0)
 
 	view := &listBoxView{
-		itemsVar.Get(), selectedVar.Get(),
+		c, itemsVar.Get(), selectedVar.Get(),
 		multiColumnVar.Get(), leftPaddingVar.Get(), rightPaddingVar.Get(),
 		firstVar, contentHeightVar}
 	return view,
 		c.Binding(func(e term.Event) etk.Reaction {
 			selected := selectedVar.Get()
 			items := itemsVar.Get()
-			n := items.Len()
+			n := CallListItemsLen(c, items)
 			switch e {
 			case term.K(ui.Up):
 				if selected-1 >= 0 {
@@ -92,7 +119,8 @@ func ListBox(c etk.Context) (etk.View, etk.React) {
 }
 
 type listBoxView struct {
-	items        ListItems
+	c            etk.Context
+	items        any
 	selected     int
 	multiColumn  bool
 	leftPadding  int
@@ -110,7 +138,7 @@ type listBoxView struct {
 }
 
 func (v *listBoxView) Render(width, height int) *term.Buffer {
-	if v.items == nil || v.items.Len() == 0 {
+	if v.items == nil || CallListItemsLen(v.c, v.items) == 0 {
 		v.first.Set(0)
 		v.contentHeight.Set(1)
 		// TODO: Respect height; make placeholder customization
@@ -125,15 +153,15 @@ func (v *listBoxView) Render(width, height int) *term.Buffer {
 }
 
 func (v *listBoxView) renderSingleColumn(width, height int) *term.Buffer {
-	first, firstCrop := singleColumnWindow(v.items, v.selected, v.first.Get(), height)
+	first, firstCrop := singleColumnWindow(v.c, v.items, v.selected, v.first.Get(), height)
 	v.first.Set(first)
 
 	lv := linesView{
 		LeftPadding: v.leftPadding, RightPadding: v.rightPadding}
-	n := v.items.Len()
+	n := CallListItemsLen(v.c, v.items)
 	var i int
 	for i = first; i < n && len(lv.Lines) < height; i++ {
-		text, areaStyling := v.items.Show(i)
+		text, areaStyling := CallListItemsShow(v.c, v.items, i)
 		if i == v.selected {
 			lv.DotAtLine = len(lv.Lines)
 			areaStyling = ui.Stylings(areaStyling, ui.Inverse)
@@ -162,12 +190,12 @@ func (v *listBoxView) renderSingleColumn(width, height int) *term.Buffer {
 func (w *listBoxView) renderMultiColumn(width, height int) *term.Buffer {
 	// TODO: Make padding customizable
 	first, colHeight, _ := multiColumnWindow(
-		w.items, w.selected, w.first.Get(), w.leftPadding+w.rightPadding, width, height)
+		w.c, w.items, w.selected, w.first.Get(), w.leftPadding+w.rightPadding, width, height)
 	w.first.Set(first)
 	w.contentHeight.Set(colHeight)
 
 	items, selected, first := w.items, w.selected, w.first.Get()
-	n := items.Len()
+	n := CallListItemsLen(w.c, items)
 
 	buf := &term.Buffer{}
 	remainedWidth := width
@@ -180,7 +208,7 @@ func (w *listBoxView) renderMultiColumn(width, height int) *term.Buffer {
 		// Render the column starting from i.
 		for j := i; j < i+colHeight && j < n; j++ {
 			last = j
-			text, areaStyling := items.Show(j)
+			text, areaStyling := CallListItemsShow(w.c, items, j)
 			if j == selected {
 				col.DotAtLine = len(col.Lines)
 				areaStyling = ui.Stylings(areaStyling, ui.Inverse)
@@ -191,7 +219,7 @@ func (w *listBoxView) renderMultiColumn(width, height int) *term.Buffer {
 			col.LineStylings = append(col.LineStylings, areaStyling)
 		}
 
-		colWidth := maxWidth(items, w.leftPadding+w.rightPadding, i, i+colHeight)
+		colWidth := maxWidth(w.c, items, w.leftPadding+w.rightPadding, i, i+colHeight)
 		if colWidth > remainedWidth {
 			colWidth = remainedWidth
 			hasCropped = true

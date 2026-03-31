@@ -28,14 +28,14 @@ func wrapListingSelect(ed *Editor, f func(selected, n, height int) int) func() e
 			return errNoListingIsActive
 		}
 		addonID := strconv.Itoa(etk.BindState(c, "addons", addons{}).Get().Addons[focus-1].ID)
-		items, ok := c.Get(addonID + "/list/items").(comps.ListItems)
-		if !ok {
+		items := c.Get(addonID + "/list/items")
+		if items == nil {
 			return errNoListingIsActive
 		}
 		selectedVar := etk.BindState(c, addonID+"/list/selected", 0)
 		contentHeight := etk.BindState(c, addonID+"/list/content-height", 0).Get()
 		selectedVar.Swap(func(selected int) int {
-			n := items.Len()
+			n := comps.CallListItemsLen(c, items)
 			newSelected := f(selected, n, contentHeight)
 			if 0 <= newSelected && newSelected < n {
 				return newSelected

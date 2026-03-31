@@ -9,13 +9,13 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var _ Hier = MapHier{}
+// var _ Hier = MapHier{}
 
 type MapHier struct {
 	Map vals.Map
 }
 
-func (mh MapHier) Get(path []string) (ListItems, string) {
+func (mh MapHier) Get(path []string) (any, string) {
 	m := mh.Map
 	path0 := path
 	for len(path) > 0 {

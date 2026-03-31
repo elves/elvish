@@ -84,12 +84,12 @@ func NewLocation(cfg LocationCfg) (etk.Comp, error) {
 	l := locationList{dirs}
 
 	return etk.ModComp(comps.ComboBox,
-		etk.InitState("gen-list", func(p string) (comps.ListItems, int) {
+		etk.InitState("gen-list", func(p string) (any, int) {
 			return l.filter(cfg.Filter.makePredicate(p)), 0
 		}),
 		etk.InitState("filter/prompt", modeLine(" LOCATION ", true)),
 		etk.InitState("filter/highlight", cfg.Filter.Highlighter),
-		etk.InitState("list/submit", func(it comps.ListItems, i int) {
+		etk.InitState("list/submit", func(it any, i int) {
 			path := it.(locationList).dirs[i].Path
 			if strings.HasPrefix(path, wsKind) {
 				path = wsRoot + path[len(wsKind):]

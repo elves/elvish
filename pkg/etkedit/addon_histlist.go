@@ -25,7 +25,7 @@ func startHistlist(ed *Editor, c etk.Context) {
 	pushAddon(c, withAfterReact(
 		etk.ModComp(comps.ComboBox,
 			etk.InitState("query/prompt", addonPromptText(" HISTORY ")),
-			etk.InitState("gen-list", func(f string) (comps.ListItems, int) {
+			etk.InitState("gen-list", func(f string) (any, int) {
 				// TODO: Implement filtering
 				return cmdItems, len(cmdItems.entries) - 1
 			}),

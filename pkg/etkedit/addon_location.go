@@ -19,7 +19,7 @@ func startLocation(ed *Editor, c etk.Context) {
 
 	pushAddon(c, etk.ModComp(comps.ComboBox,
 		etk.InitState("query/prompt", addonPromptText(" LOCATION ")),
-		etk.InitState("gen-list", func(f string) (comps.ListItems, int) {
+		etk.InitState("gen-list", func(f string) (any, int) {
 			return locationItems{dirs}, 0
 		}),
 		etk.InitState("binding", etkBindingFromBindingMap(ed, &ed.locationBinding)),

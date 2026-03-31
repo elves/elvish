@@ -6,7 +6,6 @@ import (
 	"path"
 	"sort"
 
-	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -14,9 +13,9 @@ import (
 
 type dataHier struct{ data map[string]any }
 
-var _ comps.Hier = dataHier{}
+// var _ comps.Hier = dataHier{}
 
-func (h dataHier) Get(path []string) (comps.ListItems, string) {
+func (h dataHier) Get(path []string) (any, string) {
 	data := h.data
 	path0 := path
 	for len(path) > 0 {
@@ -94,9 +93,9 @@ var hierData = map[string]any{
 
 type fsHier struct{}
 
-var _ comps.Hier = fsHier{}
+// var _ comps.Hier = fsHier{}
 
-func (h fsHier) Get(pathSlice []string) (comps.ListItems, string) {
+func (h fsHier) Get(pathSlice []string) (any, string) {
 	file, err := os.Open("/" + path.Join(pathSlice...))
 	if err != nil {
 		return nil, fmt.Sprintf("error: %v", err)

@@ -36,7 +36,7 @@ func startCompletion(ed *Editor, c etk.Context) {
 		etk.ModComp(comps.ComboBox,
 			etk.InitState("query/prompt", addonPromptText(" COMPLETE ")),
 			etk.InitState("list/multi-column", true),
-			etk.InitState("gen-list", func(f string) (comps.ListItems, int) {
+			etk.InitState("gen-list", func(f string) (any, int) {
 				// TODO: Implement actual filtering
 				if len(items) > 0 {
 					updatePending(items[0])
@@ -55,10 +55,10 @@ func startCompletion(ed *Editor, c etk.Context) {
 				})
 				return etk.Finish
 			}
-			items := etk.BindState(c, "list/items", comps.ListItems(nil)).Get()
+			items := etk.BindState(c, "list/items", any(nil)).Get()
 			selected := etk.BindState(c, "list/selected", 0).Get()
-			if items != nil && 0 <= selected && selected < items.Len() {
-				item, ok := items.Get(selected).(modes.CompletionItem)
+			if items != nil && 0 <= selected && selected < comps.CallListItemsLen(c, items) {
+				item, ok := comps.CallListItemsGet(c, items, selected).(modes.CompletionItem)
 				if ok {
 					pendingVar.Set(comps.PendingText{
 						From:    result.Replace.From,

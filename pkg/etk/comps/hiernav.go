@@ -6,16 +6,31 @@ import (
 
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/mtd"
 	"src.elv.sh/pkg/ui"
 )
 
-type Hier interface {
-	Get(path []string) (ListItems, string)
-	OnCurrentPathChange(path []string)
+var (
+	HierGet                 = mtd.New[func(fm *eval.Frame, x any, path []string) (any, string, error)]("Get")
+	HierOnCurrentPathChange = mtd.New[func(fm *eval.Frame, x any, path []string) error]("OnCurrentPathChange")
+)
+
+func CallHierGet(c etk.Context, x any, path []string) (any, string) {
+	items, text, err := HierGet.Call(c.Frame(), x, path)
+	if err != nil {
+		return nil, fmt.Sprintf("error: %v", err)
+	}
+	return items, text
+}
+
+func CallHierOnCurrentPathChange(c etk.Context, x any, path []string) {
+	HierOnCurrentPathChange.Call(c.Frame(), x, path)
+	// Ignore the error
 }
 
 func HierNav(c etk.Context) (etk.View, etk.React) {
-	hier := etk.State(c, "hier", Hier(nil)).Get()
+	hier := etk.State(c, "hier", any(nil)).Get()
 
 	pathVar := etk.State(c, "path", []string{})
 	path := pathVar.Get()
@@ -35,10 +50,10 @@ func HierNav(c etk.Context) (etk.View, etk.React) {
 	// TODO: This will work not if path itself contains "/"
 	selectedPath := pathToName(path) + "/list/selected"
 	if c.Get(selectedPath) != nil {
-		items := etk.BindState(c, pathToName(path)+"/list/items", ListItems(nil)).Get()
+		items := etk.BindState(c, pathToName(path)+"/list/items", any(nil)).Get()
 		selected := etk.BindState(c, pathToName(path)+"/list/selected", 0).Get()
-		if 0 <= selected && selected < items.Len() {
-			previewPath = slices.Concat(path, []string{items.Get(selected).(string)})
+		if 0 <= selected && selected < CallListItemsLen(c, items) {
+			previewPath = slices.Concat(path, []string{CallListItemsGet(c, items, selected).(string)})
 			preview, _ = hierNavPanel(c, hier, previewPath, "")
 		}
 	}
@@ -64,7 +79,7 @@ func HierNav(c etk.Context) (etk.View, etk.React) {
 
 }
 
-func hierNavPanel(c etk.Context, h Hier, path []string, toSelect string) (etk.View, etk.React) {
+func hierNavPanel(c etk.Context, h any, path []string, toSelect string) (etk.View, etk.React) {
 	name := pathToName(path)
 	if c.Get(name+"-comp") != nil {
 		return c.Subcomp(name, nil)
@@ -73,12 +88,12 @@ func hierNavPanel(c etk.Context, h Hier, path []string, toSelect string) (etk.Vi
 	if h == nil {
 		return etk.Text(ui.T("hier is nil")), func(term.Event) etk.Reaction { return etk.Unused }
 	}
-	items, s := h.Get(path)
+	items, s := CallHierGet(c, h, path)
 	if items != nil {
 		selected := 0
 		if toSelect != "" {
-			for i := 0; i < items.Len(); i++ {
-				if toSelect == items.Get(i) {
+			for i := 0; i < CallListItemsLen(c, items); i++ {
+				if toSelect == CallListItemsGet(c, items, i) {
 					selected = i
 					break
 				}
@@ -88,7 +103,7 @@ func hierNavPanel(c etk.Context, h Hier, path []string, toSelect string) (etk.Vi
 			etk.ModComp(
 				etk.State(c, "inner-node-comp", ComboBox).Get(),
 				etk.InitState("hide-empty-query", true),
-				etk.InitState("gen-list", func(query string) (ListItems, int) {
+				etk.InitState("gen-list", func(query string) (any, int) {
 					return items, selected
 				}),
 				etk.InitState("list/left-padding", 1),

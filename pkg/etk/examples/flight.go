@@ -10,7 +10,7 @@ import (
 func Flight(c etk.Context) (etk.View, etk.React) {
 	typeView, typeReact := c.Subcomp("type",
 		etk.ModComp(comps.ListBox,
-			etk.InitState("items", comps.StringItems("one-way", "return")),
+			etk.InitState("items", comps.MakeStringItems("one-way", "return")),
 			etk.InitState("multi-column", true)))
 	outboundView, outboundReact := c.Subcomp("outbound", comps.TextArea)
 	inboundView, inboundReact := c.Subcomp("inbound", comps.TextArea)

@@ -1,6 +1,9 @@
 package comps
 
-import "src.elv.sh/pkg/wcwidth"
+import (
+	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/wcwidth"
+)
 
 // The number of lines the listing mode keeps between the current selected item
 // and the top and bottom edges of the window, unless the available height is
@@ -26,15 +29,15 @@ const listBoxColGap = 2
 //
 //   - Among all values satisfying the above conditions, the value of first is
 //     the one closest to lastFirst.
-func singleColumnWindow(items ListItems, selected int, lastFirst int, height int) (first, crop int) {
-	n := items.Len()
+func singleColumnWindow(c etk.Context, items any, selected int, lastFirst int, height int) (first, crop int) {
+	n := CallListItemsLen(c, items)
 	if selected < 0 {
 		selected = 0
 	} else if selected >= n {
 		selected = n - 1
 	}
 	countLines := func(i int) int {
-		t, _ := items.Show(i)
+		t, _ := CallListItemsShow(c, items, i)
 		return t.CountLines()
 	}
 	selectedHeight := countLines(selected)
@@ -103,10 +106,10 @@ func singleColumnWindow(items ListItems, selected int, lastFirst int, height int
 // Determines the window to show in multi-column mode.
 // Returns the first item to show, the height of each column,
 // and whether a scrollbar may be shown.
-func multiColumnWindow(items ListItems, selected int, lastFirst int, padding, width, height int) (int, int, bool) {
-	n := items.Len()
+func multiColumnWindow(c etk.Context, items any, selected int, lastFirst int, padding, width, height int) (int, int, bool) {
+	n := CallListItemsLen(c, items)
 	// Lower bound of number of items that can fit in a row.
-	perRow := (width + listBoxColGap) / (maxWidth(items, padding, 0, n) + listBoxColGap)
+	perRow := (width + listBoxColGap) / (maxWidth(c, items, padding, 0, n) + listBoxColGap)
 	if perRow == 0 {
 		// We trim items that are too wide, so there is at least one item per row.
 		perRow = 1
@@ -130,9 +133,9 @@ func multiColumnWindow(items ListItems, selected int, lastFirst int, padding, wi
 	// Start with the column containing the selected item, move left until
 	// either the width is exhausted, or lastFirst has been reached.
 	first := selected / height * height
-	usedWidth := maxWidth(items, padding, first, first+height)
+	usedWidth := maxWidth(c, items, padding, first, first+height)
 	for ; first > lastFirst; first -= height {
-		usedWidth += maxWidth(items, padding, first-height, first) + listBoxColGap
+		usedWidth += maxWidth(c, items, padding, first-height, first) + listBoxColGap
 		if usedWidth > width {
 			break
 		}
@@ -140,12 +143,12 @@ func multiColumnWindow(items ListItems, selected int, lastFirst int, padding, wi
 	return first, height, scrollbar
 }
 
-func maxWidth(items ListItems, padding, low, high int) int {
-	n := items.Len()
+func maxWidth(c etk.Context, items any, padding, low, high int) int {
+	n := CallListItemsLen(c, items)
 	width := 0
 	for i := low; i < high && i < n; i++ {
 		w := 0
-		t, _ := items.Show(i)
+		t, _ := CallListItemsShow(c, items, i)
 		for _, seg := range t {
 			w += wcwidth.Of(seg.Text)
 		}
