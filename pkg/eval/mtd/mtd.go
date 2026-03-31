@@ -11,8 +11,7 @@ import (
 )
 
 type Method[FT any] struct {
-	goName string
-	Call   FT
+	Call FT
 }
 
 var (
