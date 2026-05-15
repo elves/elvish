@@ -3,6 +3,7 @@ package edit
 import (
 	"testing"
 
+	"src.elv.sh/pkg/cli/lscolors"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
@@ -11,6 +12,7 @@ import (
 )
 
 func TestCompletionAddon(t *testing.T) {
+	lscolors.SetTestLsColors(t)
 	f := setup(t)
 
 	testutil.ApplyDir(testutil.Dir{"a": "", "b": ""})
@@ -27,6 +29,7 @@ func TestCompletionAddon(t *testing.T) {
 }
 
 func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
+	lscolors.SetTestLsColors(t)
 	f := setup(t)
 
 	testutil.ApplyDir(testutil.Dir{"foo1": "", "foo2": "", "foo": "", "fox": ""})
@@ -73,6 +76,7 @@ func TestCompletionAddon_AppliesAutofix(t *testing.T) {
 }
 
 func TestCompleteFilename(t *testing.T) {
+	lscolors.SetTestLsColors(t)
 	f := setup(t)
 
 	testutil.ApplyDir(testutil.Dir{"d": testutil.Dir{"a": "", "b": ""}})
@@ -156,6 +160,7 @@ func TestCompleteSudo(t *testing.T) {
 }
 
 func TestCompletionMatcher(t *testing.T) {
+	lscolors.SetTestLsColors(t)
 	f := setup(t)
 
 	testutil.ApplyDir(testutil.Dir{"foo": "", "oof": ""})
