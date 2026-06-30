@@ -80,7 +80,7 @@ func completionStart(ed *Editor, bindings tk.Bindings, ev *eval.Evaler, cfg comp
 			insertedPrefix := false
 			codeArea.MutateState(func(s *tk.CodeAreaState) {
 				rep := s.Buffer.Content[result.Replace.From:result.Replace.To]
-				if len(prefix) > len(rep) && strings.HasPrefix(prefix, rep) {
+				if extendsSeed(prefix, rep, result.Seed, ev) {
 					s.Pending = tk.PendingCode{
 						Content: prefix,
 						From:    result.Replace.From, To: result.Replace.To}
@@ -235,6 +235,61 @@ func commonPrefix(s1, s2 string) string {
 		s2 = s2[n2:]
 	}
 	return s1
+}
+
+// extendsSeed reports whether the quoted candidate prefix extends the text the
+// user has already typed. The comparison is done on logical (unquoted) values
+// rather than source syntax, so that a candidate like "name-with-space" is
+// recognized as extending the partial input name-" (where the quote appears in
+// a different position).
+//
+// prefix is the common quoted ToInsert of the candidates. rep is the raw source
+// text being replaced. seed is the unquoted value of that source text (from
+// complete.Result.Seed). If seed is empty, the comparison falls back to
+// unquoting rep, to handle tilde expansion that seed may not cover.
+func extendsSeed(prefix, rep, seed string, ev *eval.Evaler) bool {
+	candidateValue := unquoteValue(prefix, ev)
+	seedValue := seed
+	if seedValue == "" {
+		seedValue = unquoteValue(rep, ev)
+	}
+	return len(candidateValue) > len(seedValue) &&
+		strings.HasPrefix(strings.ToLower(candidateValue), strings.ToLower(seedValue))
+}
+
+// unquoteValue parses s as Elvish code and returns the purely-evaluated string
+// value of the first compound. This strips quotes and expands tildes, yielding
+// the logical value rather than the surface syntax. If parsing or evaluation
+// fails, it returns s unchanged as a safe fallback.
+func unquoteValue(s string, ev *eval.Evaler) string {
+	tree, _ := parse.Parse(parse.Source{Code: s}, parse.Config{})
+	var compound *parse.Compound
+	findFirstCompound(tree.Root, &compound)
+	if compound == nil {
+		return s
+	}
+	if val, ok := ev.PurelyEvalCompound(compound); ok {
+		return val
+	}
+	return s
+}
+
+// findFirstCompound searches the parse tree depth-first for the first Compound
+// node and stores it in *result.
+func findFirstCompound(n parse.Node, result **parse.Compound) {
+	if *result != nil {
+		return
+	}
+	if c, ok := n.(*parse.Compound); ok {
+		*result = c
+		return
+	}
+	for _, ch := range parse.Children(n) {
+		findFirstCompound(ch, result)
+		if *result != nil {
+			return
+		}
+	}
 }
 
 // The type for a native Go matcher. This is not equivalent to the Elvish

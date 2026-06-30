@@ -36,6 +36,12 @@ type ArgGenerator func(args []string) ([]RawItem, error)
 // Result keeps the result of the completion algorithm.
 type Result struct {
 	Name    string
+	// Seed is the unquoted (logical) value of the text being completed. It is
+	// the purely-evaluated value of the compound the user has typed, before any
+	// quoting is applied. Compare this against the unquoted value of candidates
+	// (rather than their source-text form) to decide whether a candidate extends
+	// the seed.
+	Seed    string
 	Replace diag.Ranging
 	Items   []modes.CompletionItem
 }
@@ -84,7 +90,7 @@ func Complete(code CodeBuffer, ev *eval.Evaler, cfg Config) (*Result, error) {
 			items[i] = rawCand.Cook(ctx.quote)
 		}
 		items = dedup(items)
-		return &Result{Name: ctx.name, Items: items, Replace: ctx.interval}, nil
+		return &Result{Name: ctx.name, Seed: ctx.seed, Items: items, Replace: ctx.interval}, nil
 	}
 	return nil, errNoCompletion
 }

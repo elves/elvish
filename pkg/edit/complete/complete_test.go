@@ -124,8 +124,15 @@ func TestComplete(t *testing.T) {
 			nil),
 		Args(cb("ls a"), ev, cfg).Rets(
 			&Result{
-				Name: "argument", Replace: r(3, 4),
+				Name: "argument", Seed: "a", Replace: r(3, 4),
 				Items: []modes.CompletionItem{fci("a.exe", " ")}},
+			nil),
+		// Seed is the unquoted value even when the source uses quotes.
+		Args(cb(`ls "a`), ev, cfg).Rets(
+			&Result{
+				Name: "argument", Seed: "a", Replace: r(3, 5),
+				Items: []modes.CompletionItem{
+					{ToShow: ui.T("a.exe"), ToInsert: `"a.exe" `}}},
 			nil),
 		// GenerateForSudo completing external commands.
 		Args(cb("sudo "), ev, cfg).Rets(
@@ -147,7 +154,7 @@ func TestComplete(t *testing.T) {
 			nil),
 		Args(cb("ls a b"), ev, argGeneratorDebugCfg).Rets(
 			&Result{
-				Name: "argument", Replace: r(5, 6),
+				Name: "argument", Seed: "b", Replace: r(5, 6),
 				Items: []modes.CompletionItem{ci(`[]string{"ls", "a", "b"}`)}},
 			nil),
 
@@ -165,7 +172,7 @@ func TestComplete(t *testing.T) {
 			}),
 		Args(cb("set @"), ev, cfg).Rets(
 			&Result{
-				Name: "argument", Replace: r(4, 5),
+				Name: "argument", Seed: "@", Replace: r(4, 5),
 				Items: []modes.CompletionItem{
 					ci("@builtin-fn1~"), ci("@builtin-fn2~"),
 					ci("@builtin-var1"), ci("@builtin-var2"),
@@ -176,7 +183,7 @@ func TestComplete(t *testing.T) {
 			}),
 		Args(cb("set local-ns1:"), ev, cfg).Rets(
 			&Result{
-				Name: "argument", Replace: r(4, 14),
+				Name: "argument", Seed: "local-ns1:", Replace: r(4, 14),
 				Items: []modes.CompletionItem{
 					ci("local-ns1:lorem"),
 				},
@@ -191,7 +198,7 @@ func TestComplete(t *testing.T) {
 		// But completing the "=" itself offers no candidates.
 		Args(cb("set a ="), ev, cfg).Rets(
 			&Result{
-				Name: "argument", Replace: r(6, 7),
+				Name: "argument", Seed: "=", Replace: r(6, 7),
 				Items: nil,
 			}),
 		// "tmp" has the same completer.
@@ -249,7 +256,7 @@ func TestComplete(t *testing.T) {
 		// Complete external commands with the e: prefix.
 		Args(cb("e:"), ev, cfg).Rets(
 			&Result{
-				Name: "command", Replace: r(0, 2),
+				Name: "command", Seed: "e:", Replace: r(0, 2),
 				Items: []modes.CompletionItem{
 					ci("e:external-cmd1"), ci("e:external-cmd2"),
 				}},
@@ -257,7 +264,7 @@ func TestComplete(t *testing.T) {
 		// Commands newly defined by fn are supported too.
 		Args(cb("fn new-fn { }; new-"), ev, cfg).Rets(
 			&Result{
-				Name: "command", Replace: r(15, 19),
+				Name: "command", Seed: "new-", Replace: r(15, 19),
 				Items: []modes.CompletionItem{ci("new-fn")}},
 			nil),
 
@@ -269,7 +276,7 @@ func TestComplete(t *testing.T) {
 			nil),
 		Args(cb("p > a"), ev, cfg).Rets(
 			&Result{
-				Name: "redir", Replace: r(4, 5),
+				Name: "redir", Seed: "a", Replace: r(4, 5),
 				Items: []modes.CompletionItem{fci("a.exe", " ")}},
 			nil),
 
@@ -292,7 +299,7 @@ func TestComplete(t *testing.T) {
 		// Variables with a prefix.
 		Args(cb("p $local-"), ev, cfg).Rets(
 			&Result{
-				Name: "variable", Replace: r(3, 9),
+				Name: "variable", Seed: "local-", Replace: r(3, 9),
 				Items: []modes.CompletionItem{
 					ci("local-fn1~"), ci("local-fn2~"),
 					ci("local-ns1:"), ci("local-ns2:"),
@@ -302,32 +309,32 @@ func TestComplete(t *testing.T) {
 		// Variables newly defined in the code, in the current scope.
 		Args(cb("var new-var; p $new-"), ev, cfg).Rets(
 			&Result{
-				Name: "variable", Replace: r(16, 20),
+				Name: "variable", Seed: "new-", Replace: r(16, 20),
 				Items: []modes.CompletionItem{ci("new-var")}},
 			nil),
 		// Sigils in "var" are not part of the variable name.
 		Args(cb("var @new-var = a b; p $new-"), ev, cfg).Rets(
 			&Result{
-				Name: "variable", Replace: r(23, 27),
+				Name: "variable", Seed: "new-", Replace: r(23, 27),
 				Items: []modes.CompletionItem{ci("new-var")}},
 			nil),
 		// Function parameters are recognized as newly defined variables too.
 		Args(cb("{ |new-var| p $new-"), ev, cfg).Rets(
 			&Result{
-				Name: "variable", Replace: r(15, 19),
+				Name: "variable", Seed: "new-", Replace: r(15, 19),
 				Items: []modes.CompletionItem{ci("new-var")}},
 			nil),
 		// Variables newly defined in the code, in an outer scope.
 		Args(cb("var new-var; { p $new-"), ev, cfg).Rets(
 			&Result{
-				Name: "variable", Replace: r(18, 22),
+				Name: "variable", Seed: "new-", Replace: r(18, 22),
 				Items: []modes.CompletionItem{ci("new-var")}},
 			nil),
 		// Variables newly defined in the code, but in a scope not visible from
 		// the point of completion, are not included.
 		Args(cb("{ var new-var } p $new-"), ev, cfg).Rets(
 			&Result{
-				Name: "variable", Replace: r(19, 23),
+				Name: "variable", Seed: "new-", Replace: r(19, 23),
 				Items: nil,
 			},
 			nil),
@@ -335,7 +342,7 @@ func TestComplete(t *testing.T) {
 		// Variables defined by fn are supported too.
 		Args(cb("fn new-fn { }; p $new-"), ev, cfg).Rets(
 			&Result{
-				Name: "variable", Replace: r(18, 22),
+				Name: "variable", Seed: "new-", Replace: r(18, 22),
 				Items: []modes.CompletionItem{ci("new-fn~")}},
 			nil),
 
@@ -391,7 +398,7 @@ func TestComplete(t *testing.T) {
 			// Complete local external commands.
 			Args(cb("./"), ev, cfg).Rets(
 				&Result{
-					Name: "command", Replace: r(0, 2),
+					Name: "command", Seed: "./", Replace: r(0, 2),
 					Items: []modes.CompletionItem{
 						fci("./a.exe", " "), fci(`./d\`, "")},
 				},
@@ -403,7 +410,7 @@ func TestComplete(t *testing.T) {
 			// Complete local external commands.
 			Args(cb(`.\`), ev, cfg).Rets(
 				&Result{
-					Name: "command", Replace: r(0, 2),
+					Name: "command", Seed: `.\`, Replace: r(0, 2),
 					Items: []modes.CompletionItem{
 						fci(`.\a.exe`, " "), fci(`.\d\`, "")},
 				},
@@ -422,7 +429,7 @@ func TestComplete(t *testing.T) {
 			//       01234
 			Args(cb("p > d"), ev, cfg).Rets(
 				&Result{
-					Name: "redir", Replace: r(4, 5),
+					Name: "redir", Seed: "d", Replace: r(4, 5),
 					Items: []modes.CompletionItem{fci("d/", ""), fci("d2/", "")}},
 				nil,
 			),
@@ -430,13 +437,13 @@ func TestComplete(t *testing.T) {
 			// Complete local external commands.
 			Args(cb("./"), ev, cfg).Rets(
 				&Result{
-					Name: "command", Replace: r(0, 2),
+					Name: "command", Seed: "./", Replace: r(0, 2),
 					Items: allLocalCommandItems},
 				nil),
 			// After sudo.
 			Args(cb("sudo ./"), ev, cfg).Rets(
 				&Result{
-					Name: "argument", Replace: r(5, 7),
+					Name: "argument", Seed: "./", Replace: r(5, 7),
 					Items: allLocalCommandItems},
 				nil),
 		)

@@ -48,6 +48,146 @@ func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
 	)
 }
 
+func TestCompletionAddon_SmartStart_QuotationChange(t *testing.T) {
+	f := setup(t)
+
+	evals(f.Evaler,
+		`set edit:completion:arg-completer[bug] = {|@args| put "name-with-space"}`)
+
+	feedInput(f.TTYCtrl, `bug name-"`+"\t")
+	f.TTYCtrl.TestBuffer(t, term.NewBufferBuilder(f.width).
+		Write("~> ").
+		WriteStyled(ui.T("bug", ui.FgRed)).
+		Write(" ").
+		WriteStyled(ui.T(`"name-with-space"`, ui.FgYellow)).
+		SetDotHere().Buffer())
+}
+
+func TestCompletionAddon_SmartStart_QuotationChangeSingleQuote(t *testing.T) {
+	f := setup(t)
+
+	evals(f.Evaler,
+		`set edit:completion:arg-completer[bug] = {|@args| put "name-with-space"}`)
+
+	feedInput(f.TTYCtrl, `bug name-'`+"\t")
+	f.TTYCtrl.TestBuffer(t, term.NewBufferBuilder(f.width).
+		Write("~> ").
+		WriteStyled(ui.T("bug", ui.FgRed)).
+		Write(" ").
+		WriteStyled(ui.T(`'name-with-space'`, ui.FgYellow)).
+		SetDotHere().Buffer())
+}
+
+func TestCompletionAddon_SmartStart_BarewordQuotedCandidate(t *testing.T) {
+	f := setup(t)
+
+	evals(f.Evaler,
+		`set edit:completion:arg-completer[bug] = {|@args| put "with space"}`)
+
+	feedInput(f.TTYCtrl, `bug w`+"\t")
+	f.TTYCtrl.TestBuffer(t, term.NewBufferBuilder(f.width).
+		Write("~> ").
+		WriteStyled(ui.T("bug", ui.FgRed)).
+		Write(" ").
+		WriteStyled(ui.T(`'with space'`, ui.FgYellow)).
+		SetDotHere().Buffer())
+}
+
+func TestCompletionAddon_SmartStart_DoubleQuoteAtStart(t *testing.T) {
+	f := setup(t)
+
+	evals(f.Evaler,
+		`set edit:completion:arg-completer[bug] = {|@args| put "name-with-space"}`)
+
+	feedInput(f.TTYCtrl, `bug "name-`+"\t")
+	f.TTYCtrl.TestBuffer(t, term.NewBufferBuilder(f.width).
+		Write("~> ").
+		WriteStyled(ui.T("bug", ui.FgRed)).
+		Write(" ").
+		WriteStyled(ui.T(`"name-with-space"`, ui.FgYellow)).
+		SetDotHere().Buffer())
+}
+
+func TestCompletionAddon_SmartStart_SingleQuoteAtStart(t *testing.T) {
+	f := setup(t)
+
+	evals(f.Evaler,
+		`set edit:completion:arg-completer[bug] = {|@args| put "name-with-space"}`)
+
+	feedInput(f.TTYCtrl, `bug 'name-`+"\t")
+	f.TTYCtrl.TestBuffer(t, term.NewBufferBuilder(f.width).
+		Write("~> ").
+		WriteStyled(ui.T("bug", ui.FgRed)).
+		Write(" ").
+		WriteStyled(ui.T(`'name-with-space'`, ui.FgYellow)).
+		SetDotHere().Buffer())
+}
+
+func TestCompletionAddon_SmartStart_PureBareword(t *testing.T) {
+	f := setup(t)
+
+	evals(f.Evaler,
+		`set edit:completion:arg-completer[bug] = {|@args| put "name-with-space"}`)
+
+	feedInput(f.TTYCtrl, `bug name-`+"\t")
+	f.TTYCtrl.TestBuffer(t, term.NewBufferBuilder(f.width).
+		Write("~> ").
+		WriteStyled(ui.T("bug", ui.FgRed)).
+		Write(" name-with-space").
+		SetDotHere().Buffer())
+}
+
+func TestCompletionAddon_SmartStart_MultipleCandidatesCommonPrefix(t *testing.T) {
+	f := setup(t)
+
+	evals(f.Evaler,
+		`set edit:completion:arg-completer[bug] = {|@args|
+		   put "name-with-space"
+		   put "name-with-tab"
+		 }`)
+
+	feedInput(f.TTYCtrl, `bug name-"`+"\t")
+	// The common prefix of "name-with-space" and "name-with-tab" is
+	// "name-with-. It should be auto-inserted without opening the menu.
+	f.TTYCtrl.TestBuffer(t, term.NewBufferBuilder(f.width).
+		Write("~> ").
+		WriteStyled(ui.T("bug", ui.FgRed)).
+		Write(" ").
+		WriteStyled(ui.T(`"name-with-`, ui.FgYellow)).
+		SetDotHere().Buffer())
+}
+
+func TestCompletionAddon_SmartStart_QuoteWithinWord(t *testing.T) {
+	cases := []struct {
+		input    string
+		toInsert string
+		styled   ui.Styling
+	}{
+		{`checko"`, `"checkout"`, ui.FgYellow},
+		{`check"o`, `"checkout"`, ui.FgYellow},
+		{`"check"o`, `checkout`, nil},
+		{`"chec"k'o`, `'checkout'`, ui.FgYellow},
+	}
+	for _, tc := range cases {
+		t.Run(tc.input, func(t *testing.T) {
+			f := setup(t)
+			evals(f.Evaler,
+				`set edit:completion:arg-completer[bug] = {|@args| put "checkout"}`)
+			feedInput(f.TTYCtrl, "bug "+tc.input+"\t")
+			bb := term.NewBufferBuilder(f.width).
+				Write("~> ").
+				WriteStyled(ui.T("bug", ui.FgRed)).
+				Write(" ")
+			if tc.styled != nil {
+				bb = bb.WriteStyled(ui.T(tc.toInsert, tc.styled))
+			} else {
+				bb = bb.Write(tc.toInsert)
+			}
+			f.TTYCtrl.TestBuffer(t, bb.SetDotHere().Buffer())
+		})
+	}
+}
+
 func TestCompletionAddon_AppliesAutofix(t *testing.T) {
 	f := setup(t)
 	fooNs := eval.BuildNs().AddGoFn("a", func() {}).AddGoFn("b", func() {}).Ns()
