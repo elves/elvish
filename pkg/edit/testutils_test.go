@@ -6,6 +6,7 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/clitest"
+	"src.elv.sh/pkg/cli/lscolors"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
@@ -60,6 +61,7 @@ func setup(c testutil.Cleanuper, fns ...func(*fixture)) *fixture {
 	st := store.MustTempStore(c)
 	home := testutil.InTempHome(c)
 	testutil.Setenv(c, "PATH", "")
+	lscolors.SetTestLsColors(c)
 
 	tty, ttyCtrl := clitest.NewFakeTTY()
 	ev := eval.NewEvaler()
