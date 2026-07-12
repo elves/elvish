@@ -110,12 +110,15 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	bindings := newMapBindings(ed, ev, bindingVar)
 	matcherMapVar := newMapVar(vals.EmptyMap)
 	argGeneratorMapVar := newMapVar(vals.EmptyMap)
+	commandGeneratorMapVar := newMapVar(vals.EmptyMap)
 	cfg := func() complete.Config {
 		return complete.Config{
 			Filterer: adaptMatcherMap(
 				ed, ev, matcherMapVar.Get().(vals.Map)),
 			ArgGenerator: adaptArgGeneratorMap(
 				ev, argGeneratorMapVar.Get().(vals.Map)),
+			CommandGenerator: adaptCommandGeneratorMap(
+				ev, commandGeneratorMapVar.Get().(vals.Map)),
 		}
 	}
 	generateForSudo := func(args []string) ([]complete.RawItem, error) {
@@ -135,9 +138,10 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	nb.AddNs("completion",
 		eval.BuildNsNamed("edit:completion").
 			AddVars(map[string]vars.Var{
-				"arg-completer": argGeneratorMapVar,
-				"binding":       bindingVar,
-				"matcher":       matcherMapVar,
+				"arg-completer":     argGeneratorMapVar,
+				"binding":           bindingVar,
+				"command-completer": commandGeneratorMapVar,
+				"matcher":           matcherMapVar,
 			}).
 			AddGoFns(map[string]any{
 				"accept":      func() { listingAccept(app) },
@@ -455,6 +459,79 @@ func adaptArgGeneratorMap(ev *eval.Evaler, m vals.Map) complete.ArgGenerator {
 
 		return output, err
 	}
+}
+
+// adaptCommandGeneratorMap adapts $edit:completion:command-completer into a
+// complete.CommandGenerator. The map is looked up by the seed (the partial
+// command name being completed); if not found, the "default" key is tried; if
+// neither is found, nil is returned and the built-in generateCommands is used.
+func adaptCommandGeneratorMap(ev *eval.Evaler, m vals.Map) complete.CommandGenerator {
+	return func(seed string) ([]complete.RawItem, error) {
+		gen, ok := lookupCommandFn(m, seed)
+		if !ok || gen == nil {
+			return nil, nil
+		}
+		var output []complete.RawItem
+		var outputMutex sync.Mutex
+		collect := func(item complete.RawItem) {
+			outputMutex.Lock()
+			defer outputMutex.Unlock()
+			output = append(output, item)
+		}
+		valueCb := func(ch <-chan any) {
+			for v := range ch {
+				switch v := v.(type) {
+				case string:
+					collect(complete.PlainItem(v))
+				case complexItem:
+					collect(complete.ComplexItem(v))
+				default:
+					collect(complete.PlainItem(vals.ToString(v)))
+				}
+			}
+		}
+		bytesCb := func(r *os.File) {
+			buffered := bufio.NewReader(r)
+			for {
+				line, err := buffered.ReadString('\n')
+				if line != "" {
+					collect(complete.PlainItem(strutil.ChopLineEnding(line)))
+				}
+				if err != nil {
+					break
+				}
+			}
+		}
+		port1, done, err := eval.PipePort(valueCb, bytesCb)
+		if err != nil {
+			panic(err)
+		}
+		err = ev.Call(gen,
+			eval.CallCfg{Args: []any{seed}, From: "[editor command generator]"},
+			eval.EvalCfg{Ports: []*eval.Port{
+				nil, port1, {File: os.Stderr}}})
+		done()
+
+		return output, err
+	}
+}
+
+// lookupCommandFn looks up a command completer by seed, falling back to the
+// "default" key. This is similar to lookupFn but uses "default" as the
+// fallback key instead of "".
+func lookupCommandFn(m vals.Map, seed string) (eval.Callable, bool) {
+	val, ok := m.Index(seed)
+	if !ok {
+		val, ok = m.Index("default")
+	}
+	if !ok {
+		return nil, true
+	}
+	fn, ok := val.(eval.Callable)
+	if !ok {
+		return nil, false
+	}
+	return fn, true
 }
 
 func lookupFn(m vals.Map, ctxName string) (eval.Callable, bool) {

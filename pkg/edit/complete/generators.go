@@ -101,6 +101,20 @@ func generateExternalCommands(seed string) ([]RawItem, error) {
 	return items, nil
 }
 
+// generateCommandCandidates dispatches to a custom command generator if one is
+// configured, otherwise falls back to the built-in generateCommands. If the
+// custom generator returns no items and no error (e.g. no matching entry in the
+// command-completer map), the built-in is used as a fallback.
+func generateCommandCandidates(seed string, ev *eval.Evaler, p np.Path, cfg Config) ([]RawItem, error) {
+	if cfg.CommandGenerator != nil {
+		items, err := cfg.CommandGenerator(seed)
+		if err != nil || items != nil {
+			return items, err
+		}
+	}
+	return generateCommands(seed, ev, p)
+}
+
 func generateCommands(seed string, ev *eval.Evaler, p np.Path) ([]RawItem, error) {
 	if fsutil.DontSearch(seed) {
 		// Completing a local external command name.

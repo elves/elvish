@@ -295,6 +295,69 @@ func TestCompleteSudo(t *testing.T) {
 	testGlobal(t, f.Evaler, "cands", vals.MakeList("val1", "val2"))
 }
 
+func TestCompletionCommandCompleter_Default(t *testing.T) {
+	f := setup(t)
+
+	evals(f.Evaler,
+		`fn myone { }`,
+		`fn mytwo { }`,
+		`set edit:completion:command-completer[default] = {|seed|
+		   put myone
+		   put mytwo
+		 }`)
+
+	feedInput(f.TTYCtrl, "my\t")
+	f.TestTTY(t,
+		"~> myone\n", Styles,
+		"   VVVVV",
+		" COMPLETING command  ", Styles,
+		"******************** ", term.DotHere, "\n",
+		"myone  mytwo", Styles,
+		"+++++       ",
+	)
+}
+
+func TestCompletionCommandCompleter_SpecificSeed(t *testing.T) {
+	f := setup(t)
+
+	evals(f.Evaler,
+		`fn gita { }`,
+		`fn gitb { }`,
+		`set edit:completion:command-completer[git] = {|seed|
+		   put gita
+		   put gitb
+		 }`,
+		`set edit:completion:command-completer[default] = {|seed|
+		   put defaultcmd
+		 }`)
+
+	feedInput(f.TTYCtrl, "git\t")
+	f.TestTTY(t,
+		"~> gita\n", Styles,
+		"   VVVV",
+		" COMPLETING command  ", Styles,
+		"******************** ", term.DotHere, "\n",
+		"gita  gitb", Styles,
+		"++++      ",
+	)
+}
+
+func TestCompletionCommandCompleter_FallbackToBuiltin(t *testing.T) {
+	f := setup(t)
+
+	evals(f.Evaler,
+		`fn myfunc { }`,
+		`set edit:completion:command-completer[default] = {|seed|
+		   # return nothing so built-in is used as fallback
+		 }`)
+
+	feedInput(f.TTYCtrl, "myf\t")
+	f.TTYCtrl.TestBuffer(t, term.NewBufferBuilder(f.width).
+		Write("~> ").
+		WriteStyled(ui.T("myfunc", ui.FgGreen)).
+		SetDotHere().Buffer())
+}
+
 func TestCompletionMatcher(t *testing.T) {
 	f := setup(t)
 

@@ -47,7 +47,7 @@ func completeArg(p np.Path, ev *eval.Evaler, cfg Config) (*context, []RawItem, e
 func completeCommand(p np.Path, ev *eval.Evaler, cfg Config) (*context, []RawItem, error) {
 	generateForEmpty := func(pos int) (*context, []RawItem, error) {
 		ctx := &context{"command", "", parse.Bareword, range0(pos)}
-		items, err := generateCommands("", ev, p)
+		items, err := generateCommandCandidates("", ev, p, cfg)
 		return ctx, items, err
 	}
 
@@ -78,7 +78,7 @@ func completeCommand(p np.Path, ev *eval.Evaler, cfg Config) (*context, []RawIte
 	if p.Match(np.SimpleExpr(&expr, ev), np.Store(&form)) && form.Head == expr.Compound {
 		// Case 4: At an already started command.
 		ctx := &context{"command", expr.Value, expr.PrimarType, expr.Compound.Range()}
-		items, err := generateCommands(expr.Value, ev, p)
+		items, err := generateCommandCandidates(expr.Value, ev, p, cfg)
 		return ctx, items, err
 	}
 
