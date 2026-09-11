@@ -68,7 +68,7 @@ func renderView(v *view, buf *term.BufferBuilder) {
 	buf.EagerWrap = true
 
 	buf.WriteStyled(v.prompt)
-	if len(buf.Lines) == 1 && buf.Col*2 < buf.Width {
+	if buf.Col*2 < buf.Width {
 		buf.Indent = buf.Col
 	}
 

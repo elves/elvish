@@ -62,6 +62,17 @@ var codeAreaRenderTests = []renderTest{
 	},
 
 	{
+		Name: "multiline prompt indents continuation lines of multiline code",
+		Given: NewCodeArea(CodeAreaSpec{
+			Prompt: p(ui.T("line1\n~> ")),
+			State:  CodeAreaState{Buffer: CodeBuffer{Content: "a\nb", Dot: 3}}}),
+		Width: 10, Height: 24,
+		Want: bb(10).
+			Write("line1").Newline().Write("~> ").
+			Write("a").Newline().WriteSpaces(3).Write("b").
+			SetDotHere(),
+	},
+	{
 		Name: "prompt explicitly hidden ",
 		Given: NewCodeArea(CodeAreaSpec{
 			Prompt:  p(ui.T("~>")),
